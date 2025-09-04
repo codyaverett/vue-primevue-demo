@@ -1,0 +1,15 @@
+/* Dark theme specific styles */
+body.dark-theme {
+    background-color: var(--surface-ground);
+}
+
+/* Fix chart backgrounds for dark theme */
+.dark-theme .chart-container {
+    background-color: var(--surface-card);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+}
+
+.dark-theme canvas {
+    background-color: transparent !important;
+}
