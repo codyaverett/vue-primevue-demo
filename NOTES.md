@@ -31,24 +31,10 @@ The project is a Vue 3 application using the Composition API with PrimeVue 3 for
 ### Phase 1: Form Enhancement (REQUIRED) ✅ Priority
 
 - [x] Implement comprehensive validation system
-- [ ] Add auto-save draft functionality
+- [x] Add auto-save draft functionality
 - [ ] Improve accessibility (ARIA, keyboard navigation)
 - [ ] Add helper text and tooltips
 - [ ] Optimize mobile responsiveness
-
-### Phase 4: Theme & Polish
-
-- [ ] Implement dark/light theme toggle
-- [ ] Create style guide page
-- [ ] Improve loading states
-- [ ] Add animations/transitions
-
-### Phase 3: Dashboard
-
-- [ ] Add KPI metric cards
-- [ ] Integrate D3.js for data visualization
-- [ ] Create idea trends chart
-- [ ] Add quick action buttons
 
 ### Phase 2: Ideas Workspace
 
@@ -57,6 +43,20 @@ The project is a Vue 3 application using the Composition API with PrimeVue 3 for
 - [ ] Enhance sorting capabilities
 - [ ] Improve pagination UX
 - [ ] Add debounced upvoting
+
+### Phase 3: Dashboard
+
+- [ ] Add KPI metric cards
+- [ ] Integrate D3.js for data visualization
+- [ ] Create idea trends chart
+- [ ] Add quick action buttons
+
+### Phase 4: Theme & Polish
+
+- [ ] Implement dark/light theme toggle
+- [ ] Create style guide page
+- [ ] Improve loading states
+- [ ] Add animations/transitions
 
 ### Phase 5: Nice-to-haves
 

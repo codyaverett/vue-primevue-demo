@@ -6,6 +6,7 @@
         :initial-values="formInitialValues"
         @submit="onSubmit"
     >
+        {{ watchFormValues(values) }}
         <div class="surface-card p-3 border-round shadow-1">
             <h2 class="mt-0">Submit Idea</h2>
             <p class="text-600">
@@ -666,8 +667,27 @@
                     <div
                         class="flex justify-content-between align-items-center"
                     >
-                        <div class="text-600 text-sm">
-                            <span class="text-red-500">*</span> Required fields
+                        <div class="flex align-items-center gap-3">
+                            <div class="text-600 text-sm">
+                                <span class="text-red-500">*</span> Required
+                                fields
+                            </div>
+                            <div v-if="autoSaveStatus" class="text-sm">
+                                <span
+                                    v-if="autoSaveStatus === 'saving'"
+                                    class="text-blue-500"
+                                >
+                                    <i class="pi pi-spin pi-spinner mr-1" />
+                                    Saving draft...
+                                </span>
+                                <span
+                                    v-else-if="autoSaveStatus === 'saved'"
+                                    class="text-green-500"
+                                >
+                                    <i class="pi pi-check mr-1" />
+                                    Draft saved
+                                </span>
+                            </div>
                         </div>
                         <div class="flex gap-2">
                             <Button
@@ -701,7 +721,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { Form, Field } from "vee-validate";
 import { useToast } from "primevue/usetoast";
 import { useIdeasStore } from "../stores/ideas";
@@ -727,6 +747,8 @@ const ideasStore = useIdeasStore();
 const isSubmitting = ref(false);
 const showValidationSummary = ref(false);
 const submitSuccess = ref(false);
+const autoSaveStatus = ref(""); // 'saving', 'saved', or ''
+const autoSaveTimer = ref(null);
 
 // Options
 const categories = [
@@ -910,20 +932,65 @@ async function onSubmit(values, { resetForm }) {
 const formRef = ref(null);
 
 // Save draft to localStorage
-function saveDraft(values) {
+function saveDraft(values, showToast = true) {
     // Use the values passed from the form slot
     localStorage.setItem("draft_submit_idea", JSON.stringify(values));
-    toast.add({
-        severity: "info",
-        summary: "Draft Saved",
-        detail: "Your draft has been saved locally.",
-        life: 3000,
-    });
+    if (showToast) {
+        toast.add({
+            severity: "info",
+            summary: "Draft Saved",
+            detail: "Your draft has been saved locally.",
+            life: 3000,
+        });
+    }
+}
+
+// Auto-save draft with debounce
+function autoSaveDraft(values) {
+    // Clear any existing timer
+    if (autoSaveTimer.value) {
+        clearTimeout(autoSaveTimer.value);
+    }
+
+    // Don't auto-save if the form was just submitted successfully
+    if (submitSuccess.value) {
+        return;
+    }
+
+    // Show saving status
+    autoSaveStatus.value = "saving";
+
+    // Set a new timer for auto-save (2 second debounce)
+    autoSaveTimer.value = setTimeout(() => {
+        saveDraft(values, false); // Don't show toast for auto-save
+        autoSaveStatus.value = "saved";
+
+        // Clear the saved status after 3 seconds
+        setTimeout(() => {
+            autoSaveStatus.value = "";
+        }, 3000);
+    }, 2000);
+}
+
+// Watch form values for changes (called from template)
+const lastFormValues = ref(null);
+function watchFormValues(values) {
+    // Compare with last values to detect changes
+    if (JSON.stringify(values) !== JSON.stringify(lastFormValues.value)) {
+        lastFormValues.value = { ...values };
+        autoSaveDraft(values);
+    }
+    return ""; // Return empty string so nothing is rendered
 }
 
 // Clear form
 function clearForm() {
     if (confirm("Are you sure you want to clear all form data?")) {
+        // Clear any pending auto-save
+        if (autoSaveTimer.value) {
+            clearTimeout(autoSaveTimer.value);
+        }
+
         // Reset form using VeeValidate's resetForm
         if (formRef.value) {
             formRef.value.resetForm();
@@ -931,6 +998,7 @@ function clearForm() {
         localStorage.removeItem("draft_submit_idea");
         showValidationSummary.value = false;
         submitSuccess.value = false;
+        autoSaveStatus.value = "";
     }
 }
 
@@ -960,6 +1028,13 @@ onMounted(() => {
         } catch (error) {
             console.error("Failed to load draft:", error);
         }
+    }
+});
+
+// Clean up timer on unmount
+onUnmounted(() => {
+    if (autoSaveTimer.value) {
+        clearTimeout(autoSaveTimer.value);
     }
 });
 </script>
