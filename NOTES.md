@@ -30,19 +30,18 @@ The project is a Vue 3 application using the Composition API with PrimeVue 3 for
 
 ### Phase 1: Form Enhancement (REQUIRED) ✅ Priority
 
-- [ ] Implement comprehensive validation system
+- [x] Implement comprehensive validation system
 - [ ] Add auto-save draft functionality
 - [ ] Improve accessibility (ARIA, keyboard navigation)
 - [ ] Add helper text and tooltips
 - [ ] Optimize mobile responsiveness
 
-### Phase 2: Ideas Workspace
+### Phase 4: Theme & Polish
 
-- [ ] Implement fuzzy search across all fields
-- [ ] Add multi-select filtering
-- [ ] Enhance sorting capabilities
-- [ ] Improve pagination UX
-- [ ] Add debounced upvoting
+- [ ] Implement dark/light theme toggle
+- [ ] Create style guide page
+- [ ] Improve loading states
+- [ ] Add animations/transitions
 
 ### Phase 3: Dashboard
 
@@ -51,12 +50,13 @@ The project is a Vue 3 application using the Composition API with PrimeVue 3 for
 - [ ] Create idea trends chart
 - [ ] Add quick action buttons
 
-### Phase 4: Theme & Polish
+### Phase 2: Ideas Workspace
 
-- [ ] Implement dark/light theme toggle
-- [ ] Create style guide page
-- [ ] Improve loading states
-- [ ] Add animations/transitions
+- [ ] Implement fuzzy search across all fields
+- [ ] Add multi-select filtering
+- [ ] Enhance sorting capabilities
+- [ ] Improve pagination UX
+- [ ] Add debounced upvoting
 
 ### Phase 5: Nice-to-haves
 
@@ -148,12 +148,19 @@ Beginning with **Phase 1 (Form Enhancement)** as it's marked REQUIRED. The curre
 - Identified key areas for improvement
     - There are no tests
     - Form styling and bland design using default theme colors
-    - There is no
+    - There is no indicator to help a user know how many fields they have left to fill out
     - Page navigation state
 - Decided to use pnpm over npm (if you know, you know)
-- I set up precommit hooks and lint-staged to format, lint, and build the code to minimize broken code commited
-- Starting form validation work
+- I set up precommit hooks and lint-staged to format, lint, and build the code to minimize the chances of broken code being commited
 
-The forms
+#### Starting form validation tasks
+
+- Pulling in vee-validation because it seems like it will help with all the things we need for form validation
+- > VeeValidate is the most popular Vue.js form library. It takes care of value tracking, validation, errors, submissions and more.
+- Ran into some issues with form state. VeeValidate's v-bind="field" wasn't providing the correct binding
+  format. By explicitly using :modelValue="value" and @update:modelValue="handleChange" from
+  VeeValidate's slot props
+
+### Hour 2
 
 ---
