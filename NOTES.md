@@ -32,9 +32,9 @@ The project is a Vue 3 application using the Composition API with PrimeVue 3 for
 
 - [x] Implement comprehensive validation system
 - [x] Add auto-save draft functionality
-- [ ] Improve accessibility (ARIA, keyboard navigation)
-- [ ] Add helper text and tooltips
-- [ ] Optimize mobile responsiveness
+- [x] Improve accessibility (ARIA, keyboard navigation)
+- [x] Add helper text and tooltips
+- [x] Optimize mobile responsiveness
 
 ### Phase 2: Ideas Workspace
 
@@ -162,5 +162,10 @@ Beginning with **Phase 1 (Form Enhancement)** as it's marked REQUIRED. The curre
   VeeValidate's slot props
 
 ### Hour 2
+
+- Added form tooltips helpers
+- Added a tooltip when hovering over the disabled submit button, pointing out which fields are still not filled out
+- Tested filling out the forms with a keyboard only and can tab and arrow key around when necessary. Works fine.
+- Working on improving the ideas workspace now
 
 ---
