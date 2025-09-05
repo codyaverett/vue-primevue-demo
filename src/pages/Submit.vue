@@ -8,7 +8,12 @@
     >
         {{ watchFormValues(values) }}
         <div class="surface-card p-3 border-round shadow-1">
-            <h2 class="mt-0">Submit Idea</h2>
+            <a
+                href="#form-actions"
+                class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 bg-primary text-white p-2 border-round"
+                >Skip to form actions</a
+            >
+            <h2 id="form-title" class="mt-0">Submit Idea</h2>
             <p class="text-600">
                 Complete the form below to submit your idea. All fields marked
                 with * are required.
@@ -44,7 +49,7 @@
                 <div class="col-12">
                     <Panel header="Idea Basics">
                         <div class="grid">
-                            <div class="col-12 md:col-6">
+                            <div class="col-12 lg:col-6">
                                 <Field
                                     v-slot="{
                                         field,
@@ -56,10 +61,15 @@
                                 >
                                     <label class="block mb-2" for="title"
                                         >Title
-                                        <span class="text-red-500"
+                                        <span
+                                            class="text-red-500"
+                                            aria-label="required"
                                             >*</span
-                                        ></label
-                                    >
+                                        >
+                                        <i
+                                            v-tooltip.right="fieldHelp.title"
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <InputText
                                         id="title"
                                         v-bind="field"
@@ -70,16 +80,26 @@
                                         }"
                                         class="w-full"
                                         placeholder="Enter a descriptive title"
+                                        aria-describedby="title-help"
+                                        aria-required="true"
+                                        aria-invalid="!!errorMessage && fieldMeta.touched"
                                     />
+                                    <small
+                                        id="title-help"
+                                        class="text-600 block mt-1"
+                                        >Choose a clear, concise title (3-100
+                                        characters)</small
+                                    >
                                     <small
                                         v-if="errorMessage && fieldMeta.touched"
                                         class="p-error block mt-1"
+                                        role="alert"
                                     >
                                         {{ errorMessage }}
                                     </small>
                                 </Field>
                             </div>
-                            <div class="col-12 md:col-6">
+                            <div class="col-12 lg:col-6">
                                 <Field
                                     v-slot="{
                                         errorMessage,
@@ -92,10 +112,15 @@
                                 >
                                     <label class="block mb-2" for="category"
                                         >Category
-                                        <span class="text-red-500"
+                                        <span
+                                            class="text-red-500"
+                                            aria-label="required"
                                             >*</span
-                                        ></label
-                                    >
+                                        >
+                                        <i
+                                            v-tooltip.right="fieldHelp.category"
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <Dropdown
                                         id="category"
                                         :model-value="value"
@@ -107,11 +132,21 @@
                                                 fieldMeta.touched,
                                         }"
                                         class="w-full"
+                                        aria-describedby="category-help"
+                                        aria-required="true"
+                                        aria-invalid="!!errorMessage && fieldMeta.touched"
                                         @update:model-value="handleChange"
                                     />
                                     <small
+                                        id="category-help"
+                                        class="text-600 block mt-1"
+                                        >Select the category that best fits your
+                                        idea</small
+                                    >
+                                    <small
                                         v-if="errorMessage && fieldMeta.touched"
                                         class="p-error block mt-1"
+                                        role="alert"
                                     >
                                         {{ errorMessage }}
                                     </small>
@@ -129,10 +164,17 @@
                                 >
                                     <label class="block mb-2" for="desc"
                                         >Description
-                                        <span class="text-red-500"
+                                        <span
+                                            class="text-red-500"
+                                            aria-label="required"
                                             >*</span
-                                        ></label
-                                    >
+                                        >
+                                        <i
+                                            v-tooltip.right="
+                                                fieldHelp.description
+                                            "
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <Textarea
                                         id="desc"
                                         v-bind="field"
@@ -145,6 +187,9 @@
                                         }"
                                         class="w-full"
                                         placeholder="Describe your idea in detail (10-500 characters)"
+                                        aria-describedby="desc-help desc-counter"
+                                        aria-required="true"
+                                        aria-invalid="!!errorMessage && fieldMeta.touched"
                                     />
                                     <div class="flex justify-content-between">
                                         <small
@@ -156,7 +201,17 @@
                                         >
                                             {{ errorMessage }}
                                         </small>
-                                        <small class="text-600 mt-1">
+                                        <small
+                                            id="desc-help"
+                                            class="text-600 block mt-1"
+                                            >Provide a detailed explanation of
+                                            your idea</small
+                                        >
+                                        <small
+                                            id="desc-counter"
+                                            class="text-600 mt-1"
+                                            aria-live="polite"
+                                        >
                                             {{ field.value?.length || 0 }}/500
                                             characters
                                         </small>
@@ -176,10 +231,11 @@
                                 >
                                     <label class="block mb-2"
                                         >Tags
-                                        <span class="text-red-500"
-                                            >*</span
-                                        ></label
-                                    >
+                                        <span class="text-red-500">*</span>
+                                        <i
+                                            v-tooltip.right="fieldHelp.tags"
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <Chips
                                         :model-value="value"
                                         separator=","
@@ -208,7 +264,7 @@
                 <div class="col-12">
                     <Panel header="Impact & Priority">
                         <div class="grid">
-                            <div class="col-12 md:col-6">
+                            <div class="col-12 lg:col-6">
                                 <Field
                                     v-slot="{
                                         errorMessage,
@@ -221,10 +277,11 @@
                                 >
                                     <label class="block mb-2"
                                         >Target Personas
-                                        <span class="text-red-500"
-                                            >*</span
-                                        ></label
-                                    >
+                                        <span class="text-red-500">*</span>
+                                        <i
+                                            v-tooltip.right="fieldHelp.personas"
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <MultiSelect
                                         :model-value="value"
                                         :options="personas"
@@ -247,7 +304,7 @@
                                     </small>
                                 </Field>
                             </div>
-                            <div class="col-12 md:col-3">
+                            <div class="col-12 md:col-6 lg:col-3">
                                 <Field
                                     v-slot="{
                                         errorMessage,
@@ -260,10 +317,11 @@
                                 >
                                     <label class="block mb-2"
                                         >Impact Score
-                                        <span class="text-red-500"
-                                            >*</span
-                                        ></label
-                                    >
+                                        <span class="text-red-500">*</span>
+                                        <i
+                                            v-tooltip.right="fieldHelp.impact"
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <Slider
                                         :model-value="value"
                                         :min="1"
@@ -291,7 +349,7 @@
                                     </div>
                                 </Field>
                             </div>
-                            <div class="col-12 md:col-3">
+                            <div class="col-12 md:col-6 lg:col-3">
                                 <Field
                                     v-slot="{
                                         errorMessage,
@@ -304,10 +362,11 @@
                                 >
                                     <label class="block mb-2"
                                         >Expected Reach
-                                        <span class="text-red-500"
-                                            >*</span
-                                        ></label
-                                    >
+                                        <span class="text-red-500">*</span>
+                                        <i
+                                            v-tooltip.right="fieldHelp.reach"
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <InputNumber
                                         :model-value="value"
                                         :min="1"
@@ -330,7 +389,7 @@
                                     </small>
                                 </Field>
                             </div>
-                            <div class="col-12 md:col-3">
+                            <div class="col-12 md:col-6 lg:col-3">
                                 <Field
                                     v-slot="{
                                         errorMessage,
@@ -342,8 +401,13 @@
                                     :rules="validationRules.targetDate"
                                 >
                                     <label class="block mb-2"
-                                        >Target Date</label
-                                    >
+                                        >Target Date
+                                        <i
+                                            v-tooltip.right="
+                                                fieldHelp.targetDate
+                                            "
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <Calendar
                                         :model-value="value"
                                         :show-icon="true"
@@ -374,7 +438,7 @@
                 <div class="col-12">
                     <Panel header="Technical Details">
                         <div class="grid">
-                            <div class="col-12 md:col-4">
+                            <div class="col-12 md:col-6 lg:col-4">
                                 <Field
                                     v-slot="{
                                         errorMessage,
@@ -387,10 +451,13 @@
                                 >
                                     <label class="block mb-2"
                                         >Complexity
-                                        <span class="text-red-500"
-                                            >*</span
-                                        ></label
-                                    >
+                                        <span class="text-red-500">*</span>
+                                        <i
+                                            v-tooltip.right="
+                                                fieldHelp.complexity
+                                            "
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <Dropdown
                                         :model-value="value"
                                         :options="complexityOptions"
@@ -411,14 +478,19 @@
                                     </small>
                                 </Field>
                             </div>
-                            <div class="col-12 md:col-4">
+                            <div class="col-12 md:col-6 lg:col-4">
                                 <Field
                                     v-slot="{ value, handleChange }"
                                     name="dependencies"
                                 >
                                     <label class="block mb-2"
-                                        >Dependencies</label
-                                    >
+                                        >Dependencies
+                                        <i
+                                            v-tooltip.right="
+                                                fieldHelp.dependencies
+                                            "
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <Chips
                                         :model-value="value"
                                         separator=","
@@ -428,7 +500,7 @@
                                     />
                                 </Field>
                             </div>
-                            <div class="col-12 md:col-4">
+                            <div class="col-12 md:col-6 lg:col-4">
                                 <Field
                                     v-slot="{
                                         field,
@@ -439,8 +511,11 @@
                                     :rules="validationRules.repoUrl"
                                 >
                                     <label class="block mb-2" for="repo"
-                                        >Repository URL</label
-                                    >
+                                        >Repository URL
+                                        <i
+                                            v-tooltip.right="fieldHelp.repoUrl"
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <InputText
                                         id="repo"
                                         v-bind="field"
@@ -468,10 +543,11 @@
                                 >
                                     <label class="block mb-2"
                                         >Privacy Setting
-                                        <span class="text-red-500"
-                                            >*</span
-                                        ></label
-                                    >
+                                        <span class="text-red-500">*</span>
+                                        <i
+                                            v-tooltip.right="fieldHelp.privacy"
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <div class="flex gap-3">
                                         <div
                                             class="flex align-items-center gap-2"
@@ -530,7 +606,7 @@
                 <div class="col-12">
                     <Panel header="Contact Information">
                         <div class="grid">
-                            <div class="col-12 md:col-4">
+                            <div class="col-12 md:col-6 lg:col-4">
                                 <Field
                                     v-slot="{
                                         field,
@@ -542,10 +618,13 @@
                                 >
                                     <label class="block mb-2" for="name"
                                         >Your Name
-                                        <span class="text-red-500"
-                                            >*</span
-                                        ></label
-                                    >
+                                        <span class="text-red-500">*</span>
+                                        <i
+                                            v-tooltip.right="
+                                                fieldHelp.requesterName
+                                            "
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <InputText
                                         id="name"
                                         v-bind="field"
@@ -565,7 +644,7 @@
                                     </small>
                                 </Field>
                             </div>
-                            <div class="col-12 md:col-4">
+                            <div class="col-12 md:col-6 lg:col-4">
                                 <Field
                                     v-slot="{
                                         field,
@@ -577,10 +656,13 @@
                                 >
                                     <label class="block mb-2" for="email"
                                         >Your Email
-                                        <span class="text-red-500"
-                                            >*</span
-                                        ></label
-                                    >
+                                        <span class="text-red-500">*</span>
+                                        <i
+                                            v-tooltip.right="
+                                                fieldHelp.requesterEmail
+                                            "
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <InputText
                                         id="email"
                                         v-bind="field"
@@ -601,14 +683,17 @@
                                     </small>
                                 </Field>
                             </div>
-                            <div class="col-12 md:col-4">
+                            <div class="col-12 md:col-6 lg:col-4">
                                 <Field
                                     v-slot="{ value, handleChange }"
                                     name="notify"
                                 >
                                     <label class="block mb-2"
-                                        >Email Notifications</label
-                                    >
+                                        >Email Notifications
+                                        <i
+                                            v-tooltip.right="fieldHelp.notify"
+                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                    /></label>
                                     <div class="flex align-items-center h-3rem">
                                         <InputSwitch
                                             :model-value="value"
@@ -645,10 +730,13 @@
                                             >I confirm the information provided
                                             is accurate and I agree to the terms
                                             of service
-                                            <span class="text-red-500"
-                                                >*</span
-                                            ></label
-                                        >
+                                            <span class="text-red-500">*</span>
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.terms
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
                                     </div>
                                     <small
                                         v-if="errorMessage"
@@ -663,9 +751,9 @@
                 </div>
 
                 <!-- Form Actions -->
-                <div class="col-12">
+                <div id="form-actions" class="col-12">
                     <div
-                        class="flex justify-content-between align-items-center"
+                        class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3"
                     >
                         <div class="flex align-items-center gap-3">
                             <div class="text-600 text-sm">
@@ -705,13 +793,22 @@
                                 :disabled="!meta.dirty"
                                 @click="() => saveDraft(values)"
                             />
-                            <Button
-                                label="Submit Idea"
-                                icon="pi pi-check"
-                                type="submit"
-                                :loading="isSubmitting"
-                                :disabled="!meta.valid || isSubmitting"
-                            />
+                            <span
+                                v-tooltip.top="
+                                    !meta.valid
+                                        ? getMissingFieldsMessage(values)
+                                        : ''
+                                "
+                                class="inline-block"
+                            >
+                                <Button
+                                    label="Submit Idea"
+                                    icon="pi pi-check"
+                                    type="submit"
+                                    :loading="isSubmitting"
+                                    :disabled="!meta.valid || isSubmitting"
+                                />
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -765,6 +862,152 @@ const personas = [
     { label: "End User", value: "end-user" },
 ];
 const complexityOptions = ["Low", "Medium", "High"];
+
+// Field help content for tooltips
+const fieldHelp = {
+    title: `A concise, descriptive title for your idea.
+
+Examples:
+• "Add Dark Mode Toggle to Settings"
+• "Implement CSV Export for Reports"
+• "Optimize Dashboard Load Time"
+
+Tips:
+• Be specific about the feature
+• Avoid generic titles like "New Feature"
+• Keep it under 100 characters`,
+
+    category: `Select the area most impacted by your idea.
+
+• Platform: Core system functionality
+• UI: User interface improvements
+• Performance: Speed and optimization
+• Integrations: Third-party connections
+• Security: Safety and access control`,
+
+    description: `Explain your idea in detail.
+
+Include:
+• What problem it solves
+• Who will benefit
+• Expected outcome
+
+Example:
+"Users currently have to manually export data one table at a time. This feature would allow bulk export of all related data with a single click, saving hours of work for analysts."`,
+
+    tags: `Add keywords to help categorize your idea.
+
+Examples:
+• Feature tags: export, automation, analytics
+• Tech tags: api, database, frontend
+• Priority tags: urgent, nice-to-have
+
+Tip: Press Enter after each tag`,
+
+    personas: `Select all user groups who will benefit.
+
+• Admin: System administrators
+• Developer: Technical users & API consumers
+• Analyst: Data and reporting users
+• End User: General application users
+
+Tip: Select multiple if applicable`,
+
+    impact: `Rate the potential impact (1-10).
+
+1-3: Minor improvement
+4-6: Moderate enhancement
+7-9: Major feature
+10: Game-changing
+
+Consider: User base size, time saved, revenue impact`,
+
+    reach: `Estimated number of users affected.
+
+Examples:
+• Internal tool: 50-200 users
+• Department feature: 500-1000
+• Company-wide: 5000+
+• Customer-facing: 10000+`,
+
+    targetDate: `When should this be implemented?
+
+Consider:
+• Business deadlines
+• Seasonal requirements
+• Dependencies on other features
+• Resource availability`,
+
+    complexity: `Technical implementation difficulty.
+
+Low: < 1 week, minimal risk
+• Simple UI changes
+• Config updates
+
+Medium: 1-4 weeks, some risk
+• New features
+• Integration work
+
+High: > 1 month, significant risk
+• Architecture changes
+• Multiple system impacts`,
+
+    dependencies: `List any prerequisites or related items.
+
+Examples:
+• "Requires API v2 upgrade"
+• "Depends on user auth system"
+• "Needs design approval"
+• "Related to ticket #1234"`,
+
+    repoUrl: `Link to relevant code repository.
+
+Examples:
+• https://github.com/company/project
+• https://gitlab.com/team/app
+• https://bitbucket.org/workspace/repo
+
+Optional but helpful for technical review`,
+
+    privacy: `Who can view this idea?
+
+• Public: Everyone can see
+• Internal: Company employees only
+• Private: Only you and admins
+
+Default: Internal for most ideas`,
+
+    requesterName: `Your full name for follow-up.
+
+This helps us:
+• Contact you for clarification
+• Give credit for the idea
+• Include you in implementation discussions`,
+
+    requesterEmail: `Valid email for notifications.
+
+You'll receive updates on:
+• Status changes
+• Comments from reviewers
+• Implementation timeline
+• Questions from the team`,
+
+    notify: `Email notification preferences.
+
+When enabled, you'll get notified about:
+• Idea approval/rejection
+• Status updates
+• Comments and questions
+• Implementation progress`,
+
+    terms: `Agreement to submission terms.
+
+By checking, you confirm:
+• Information is accurate
+• Idea is original or properly attributed
+• You accept the review process
+• Implementation is at company discretion`,
+};
 
 // Initial form values (reactive for draft loading)
 const formInitialValues = ref({
@@ -983,6 +1226,92 @@ function watchFormValues(values) {
     return ""; // Return empty string so nothing is rendered
 }
 
+// Get missing required fields message for tooltip
+function getMissingFieldsMessage(values) {
+    const sections = {};
+
+    // Check Idea Basics section
+    if (!values.title || values.title.length < 3) {
+        if (!sections["Idea Basics"]) sections["Idea Basics"] = [];
+        sections["Idea Basics"].push("Title");
+    }
+    if (!values.category) {
+        if (!sections["Idea Basics"]) sections["Idea Basics"] = [];
+        sections["Idea Basics"].push("Category");
+    }
+    if (!values.description || values.description.length < 10) {
+        if (!sections["Idea Basics"]) sections["Idea Basics"] = [];
+        sections["Idea Basics"].push("Description");
+    }
+    if (!values.tags || values.tags.length === 0) {
+        if (!sections["Idea Basics"]) sections["Idea Basics"] = [];
+        sections["Idea Basics"].push("Tags");
+    }
+
+    // Check Impact & Priority section
+    if (!values.personas || values.personas.length === 0) {
+        if (!sections["Impact & Priority"]) sections["Impact & Priority"] = [];
+        sections["Impact & Priority"].push("Target Personas");
+    }
+    if (!values.impact) {
+        if (!sections["Impact & Priority"]) sections["Impact & Priority"] = [];
+        sections["Impact & Priority"].push("Impact Score");
+    }
+    if (!values.reach || values.reach < 1) {
+        if (!sections["Impact & Priority"]) sections["Impact & Priority"] = [];
+        sections["Impact & Priority"].push("Expected Reach");
+    }
+
+    // Check Technical Details section
+    if (!values.complexity) {
+        if (!sections["Technical Details"]) sections["Technical Details"] = [];
+        sections["Technical Details"].push("Complexity");
+    }
+    if (!values.privacy) {
+        if (!sections["Technical Details"]) sections["Technical Details"] = [];
+        sections["Technical Details"].push("Privacy Setting");
+    }
+
+    // Check Contact Information section
+    if (!values.requesterName || values.requesterName.length < 2) {
+        if (!sections["Contact Information"])
+            sections["Contact Information"] = [];
+        sections["Contact Information"].push("Your Name");
+    }
+    if (!values.requesterEmail || !isValidEmail(values.requesterEmail)) {
+        if (!sections["Contact Information"])
+            sections["Contact Information"] = [];
+        sections["Contact Information"].push("Your Email");
+    }
+    if (!values.terms) {
+        if (!sections["Contact Information"])
+            sections["Contact Information"] = [];
+        sections["Contact Information"].push("Terms Agreement");
+    }
+
+    // Build the message
+    if (Object.keys(sections).length === 0) {
+        return "";
+    }
+
+    let message = "Missing required fields:\n\n";
+    for (const [section, fields] of Object.entries(sections)) {
+        message += `${section}:\n`;
+        fields.forEach((field) => {
+            message += `  • ${field}\n`;
+        });
+        message += "\n";
+    }
+
+    return message.trim();
+}
+
+// Helper function to validate email
+function isValidEmail(email) {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+}
+
 // Clear form
 function clearForm() {
     if (confirm("Are you sure you want to clear all form data?")) {
@@ -1046,5 +1375,47 @@ onUnmounted(() => {
 
 .p-error {
     color: var(--red-500);
+}
+
+/* Screen reader only class for skip links */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.sr-only:focus,
+.focus\:not-sr-only:focus {
+    position: absolute;
+    width: auto;
+    height: auto;
+    padding: 0.5rem;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+}
+
+/* Improve focus visibility */
+:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Mobile responsiveness improvements */
+@media (max-width: 576px) {
+    .surface-card {
+        padding: 1rem !important;
+    }
+
+    .p-panel .p-panel-content {
+        padding: 1rem;
+    }
 }
 </style>
