@@ -12,12 +12,14 @@
         "prepare": "husky"
     },
     "dependencies": {
+        "@vee-validate/rules": "^4.15.1",
         "chart.js": "^3.9.1",
         "pinia": "^2.1.6",
         "primeflex": "^3.3.0",
         "primeicons": "^6.0.0",
         "primevue": "^3.0.0",
         "uuid": "^9.0.0",
+        "vee-validate": "^4.15.1",
         "vue": "^3.4.0",
         "vue-router": "^4.3.0"
     },
