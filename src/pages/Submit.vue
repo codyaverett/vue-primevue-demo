@@ -1126,7 +1126,7 @@ async function onSubmit(values, { resetForm }) {
             description: values.description,
             category: values.category,
             tags: values.tags,
-            status: "New",
+            status: "Active",
             personas: values.personas,
             impact: values.impact,
             reach: values.reach,

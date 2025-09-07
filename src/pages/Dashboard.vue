@@ -107,8 +107,8 @@
         <!-- Data Visualizations -->
         <div class="grid mb-4">
             <!-- Trend Chart -->
-            <div class="col-12 lg:col-8">
-                <Card>
+            <div class="col-12 lg:col-8 flex">
+                <Card class="h-full flex-1">
                     <template #title>
                         <div
                             class="flex align-items-center justify-content-between"
@@ -133,8 +133,8 @@
             </div>
 
             <!-- Category Distribution -->
-            <div class="col-12 lg:col-4">
-                <Card>
+            <div class="col-12 lg:col-4 flex">
+                <Card class="h-full flex-1">
                     <template #title> Category Distribution </template>
                     <template #content>
                         <CategoryChart
@@ -147,10 +147,11 @@
             </div>
         </div>
 
-        <!-- Tag Cloud -->
+        <!-- Tag Cloud and Calendar Heatmap Side by Side -->
         <div class="grid mb-4">
-            <div class="col-12">
-                <Card>
+            <!-- Tag Cloud -->
+            <div class="col-12 lg:col-6 flex">
+                <Card class="h-full flex-1">
                     <template #title>
                         <div
                             class="flex align-items-center justify-content-between"
@@ -170,12 +171,10 @@
                     </template>
                 </Card>
             </div>
-        </div>
 
-        <!-- Calendar Heatmap -->
-        <div class="grid mb-4">
-            <div class="col-12">
-                <Card>
+            <!-- Calendar Heatmap -->
+            <div class="col-12 lg:col-6 flex">
+                <Card class="h-full flex-1">
                     <template #title>
                         <div
                             class="flex align-items-center justify-content-between"
