@@ -1,9 +1,11 @@
 <template>
-    <IdeaTable
-        :initial-tag-filter="tagFilter"
-        :initial-category-filter="categoryFilter"
-        :initial-date-filter="dateFilter"
-    />
+    <div class="ideas-page">
+        <IdeaTable
+            :initial-tag-filter="tagFilter"
+            :initial-category-filter="categoryFilter"
+            :initial-date-filter="dateFilter"
+        />
+    </div>
 </template>
 <script setup>
 import { computed } from "vue";
@@ -21,3 +23,11 @@ const categoryFilter = computed(() => route.query.category || null);
 // Get date filter from query param
 const dateFilter = computed(() => route.query.date || null);
 </script>
+
+<style scoped>
+.ideas-page {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+</style>
