@@ -56,7 +56,7 @@ The project is a Vue 3 application using the Composition API with PrimeVue 3 for
 - [ ] Implement dark/light theme toggle
 - [ ] Create style guide page
 - [ ] Improve loading states
-- [ ] Add animations/transitions
+- [x] Add animations/transitions
 
 ### Phase 5: Nice-to-haves
 
@@ -176,5 +176,11 @@ Beginning with **Phase 1 (Form Enhancement)** as it's marked REQUIRED. The curre
 - I started working with D3 instead of chart.js because I wanted to make something cool and more custom than just something like a pie chart. We'll see how this goes, might end up crawling back to use chart.js if things get ugly
     - D3 is working, so I'm going to stick with using D3 for this demo
     - I am considering breaking some of the components out into their own files, this will make sense for reused components or complex component that have their own state to manage like an interesting data visualization
+- Working on the dashboard has lead to some scope creep. I've been experimenting with various d3 charts and making the charts interactable, like clicking on a chart will take you to the ideas page with the relevant filters enabled already
+- I also added some animations/transitions of the d3 components
+
+### Hour 4
+
+- UX time
 
 ---

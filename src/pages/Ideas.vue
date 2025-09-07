@@ -2,6 +2,7 @@
     <IdeaTable
         :initial-tag-filter="tagFilter"
         :initial-category-filter="categoryFilter"
+        :initial-date-filter="dateFilter"
     />
 </template>
 <script setup>
@@ -16,4 +17,7 @@ const tagFilter = computed(() => route.query.tag || null);
 
 // Get category filter from query param
 const categoryFilter = computed(() => route.query.category || null);
+
+// Get date filter from query param
+const dateFilter = computed(() => route.query.date || null);
 </script>
