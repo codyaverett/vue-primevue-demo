@@ -42,6 +42,17 @@
                     :max-selected-labels="2"
                     :show-clear="true"
                 />
+                <span class="p-input-icon-left mr-2">
+                    <i class="pi pi-calendar" />
+                    <Calendar
+                        v-model="filters.dateRange"
+                        selection-mode="range"
+                        placeholder="Filter by Date Range"
+                        date-format="mm/dd/yy"
+                        :show-clear="true"
+                        :show-button-bar="true"
+                    />
+                </span>
                 <Dropdown
                     v-model="selectedSort"
                     :options="sortOptions"
@@ -262,6 +273,7 @@ import Dropdown from "primevue/dropdown";
 import MultiSelect from "primevue/multiselect";
 import ToggleButton from "primevue/togglebutton";
 import Paginator from "primevue/paginator";
+import Calendar from "primevue/calendar";
 import IdeaForm from "./IdeaForm.vue";
 
 const props = defineProps({
@@ -277,6 +289,10 @@ const props = defineProps({
         type: String,
         default: null,
     },
+    initialDateFilter: {
+        type: String,
+        default: null,
+    },
 });
 
 const store = useIdeasStore();
@@ -289,7 +305,7 @@ const categories = [
 ];
 const statuses = ["New", "Planned", "In Progress", "Done"];
 const search = ref("");
-const filters = ref({ status: [], category: [], tags: [] });
+const filters = ref({ status: [], category: [], tags: [], dateRange: null });
 const grid = ref(false);
 const votingId = ref(null);
 const sortField = ref("votes");
@@ -319,6 +335,63 @@ const filtered = computed(() => {
             if (!i.tags || i.tags.length === 0) return false;
             return filters.value.tags.some((tag) => i.tags.includes(tag));
         });
+    }
+
+    // Date range filtering
+    if (filters.value.dateRange) {
+        if (
+            Array.isArray(filters.value.dateRange) &&
+            filters.value.dateRange.length === 2
+        ) {
+            // Date range from calendar picker
+            const [startDate, endDate] = filters.value.dateRange;
+            if (startDate && endDate) {
+                list = list.filter((i) => {
+                    if (!i.createdAt) return false;
+                    const ideaDate = new Date(i.createdAt);
+
+                    // Get UTC date string for the idea
+                    const ideaYear = ideaDate.getUTCFullYear();
+                    const ideaMonth = String(
+                        ideaDate.getUTCMonth() + 1
+                    ).padStart(2, "0");
+                    const ideaDay = String(ideaDate.getUTCDate()).padStart(
+                        2,
+                        "0"
+                    );
+                    const ideaDateStr = `${ideaYear}-${ideaMonth}-${ideaDay}`;
+
+                    // Get UTC date strings for start and end to match dashboard heatmap
+                    // The filter dates come from query params which are already in UTC format (YYYY-MM-DD)
+                    // So we use the dates directly as UTC dates
+                    const startYear = startDate.getUTCFullYear();
+                    const startMonth = String(
+                        startDate.getUTCMonth() + 1
+                    ).padStart(2, "0");
+                    const startDay = String(startDate.getUTCDate()).padStart(
+                        2,
+                        "0"
+                    );
+                    const startDateStr = `${startYear}-${startMonth}-${startDay}`;
+
+                    const endYear = endDate.getUTCFullYear();
+                    const endMonth = String(endDate.getUTCMonth() + 1).padStart(
+                        2,
+                        "0"
+                    );
+                    const endDay = String(endDate.getUTCDate()).padStart(
+                        2,
+                        "0"
+                    );
+                    const endDateStr = `${endYear}-${endMonth}-${endDay}`;
+
+                    // Compare date strings
+                    return (
+                        ideaDateStr >= startDateStr && ideaDateStr <= endDateStr
+                    );
+                });
+            }
+        }
     }
 
     // Enhanced sorting
@@ -391,6 +464,8 @@ watch(
     (newTag) => {
         if (newTag && !filters.value.tags.includes(newTag)) {
             filters.value.tags = [newTag];
+        } else if (!newTag) {
+            filters.value.tags = [];
         }
     },
     { immediate: true }
@@ -402,6 +477,30 @@ watch(
     (newCategory) => {
         if (newCategory && !filters.value.category.includes(newCategory)) {
             filters.value.category = [newCategory];
+        } else if (!newCategory) {
+            filters.value.category = [];
+        }
+    },
+    { immediate: true }
+);
+
+// Handle initial date filter from props (from heatmap click)
+watch(
+    () => props.initialDateFilter,
+    (newDate) => {
+        if (newDate) {
+            // Create UTC date from the date string (YYYY-MM-DD format)
+            // This ensures consistency with how the heatmap counts dates
+            const [year, month, day] = newDate.split("-").map(Number);
+            const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+            filters.value.dateRange = [date, date];
+
+            // Clear other filters when navigating with date
+            if (!props.initialTagFilter) filters.value.tags = [];
+            if (!props.initialCategoryFilter) filters.value.category = [];
+        } else {
+            // Clear date range if no initial filter
+            filters.value.dateRange = null;
         }
     },
     { immediate: true }
