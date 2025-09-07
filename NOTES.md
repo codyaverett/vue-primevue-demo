@@ -51,11 +51,11 @@ The project is a Vue 3 application using the Composition API with PrimeVue 3 for
 - [x] Create idea trends chart
 - [x] Add quick action buttons
 
-### Phase 4: Theme & Polish
+### Phase 4: Theme & Polish ✅
 
-- [ ] Implement dark/light theme toggle
-- [ ] Create style guide page
-- [ ] Improve loading states
+- [x] Implement dark/light theme toggle
+- [x] Create style guide page
+- [x] Improve loading states
 - [x] Add animations/transitions
 
 ### Phase 5: Nice-to-haves

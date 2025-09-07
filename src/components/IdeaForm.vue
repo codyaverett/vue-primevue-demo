@@ -46,7 +46,13 @@ import Textarea from "primevue/textarea";
 import Button from "primevue/button";
 import Dropdown from "primevue/dropdown";
 import Chips from "primevue/chips";
-const props = defineProps({ modelValue: Boolean, value: Object });
+const props = defineProps({
+    modelValue: Boolean,
+    value: {
+        type: Object,
+        default: null,
+    },
+});
 const emit = defineEmits(["update:modelValue", "submit"]);
 const categories = [
     "Platform",
@@ -55,12 +61,12 @@ const categories = [
     "Integrations",
     "Security",
 ];
-const statuses = ["New", "Planned", "In Progress", "Done"];
+const statuses = ["Active", "Under Review", "Implemented"];
 const form = reactive({
     title: "",
     description: "",
     category: "",
-    status: "New",
+    status: "Active",
     tags: [],
 });
 watch(
@@ -71,7 +77,7 @@ watch(
                 title: "",
                 description: "",
                 category: "",
-                status: "New",
+                status: "Active",
                 tags: [],
                 ...v,
             });
