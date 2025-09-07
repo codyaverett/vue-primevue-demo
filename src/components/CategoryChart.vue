@@ -48,7 +48,13 @@ const props = defineProps({
         default: null,
         // Expected shape: { value: '25', label: 'Total' }
     },
+    clickable: {
+        type: Boolean,
+        default: true,
+    },
 });
+
+const emit = defineEmits(["category-click"]);
 
 const chartContainer = ref(null);
 let resizeObserver = null;
@@ -135,7 +141,7 @@ const drawChart = () => {
         .attr("fill", (d) => color(d.data.category))
         .attr("stroke", "white")
         .attr("stroke-width", 2)
-        .style("cursor", "pointer")
+        .style("cursor", props.clickable ? "pointer" : "default")
         .style("opacity", 0)
         .transition()
         .duration(800)
@@ -166,16 +172,27 @@ const drawChart = () => {
 
             tooltip.transition().duration(200).style("opacity", 1);
 
-            tooltip
-                .html(
-                    `
+            tooltip.html(
+                `
                 <div><strong>${d.data.category}</strong></div>
                 <div>Count: ${d.data.count}</div>
                 <div>Percentage: ${percentage}%</div>
+                ${props.clickable ? '<div style="font-size: 10px; margin-top: 4px; opacity: 0.8;">Click to filter</div>' : ""}
             `
-                )
-                .style("left", event.layerX + 10 + "px")
-                .style("top", event.layerY - 10 + "px");
+            );
+
+            // Position tooltip based on mouse position
+            const rect = chartContainer.value.getBoundingClientRect();
+            tooltip
+                .style("left", event.clientX - rect.left + 10 + "px")
+                .style("top", event.clientY - rect.top - 10 + "px");
+        })
+        .on("mousemove", function (event) {
+            // Update tooltip position as mouse moves
+            const rect = chartContainer.value.getBoundingClientRect();
+            tooltip
+                .style("left", event.clientX - rect.left + 10 + "px")
+                .style("top", event.clientY - rect.top - 10 + "px");
         })
         .on("mouseout", function () {
             d3.select(this)
@@ -184,6 +201,20 @@ const drawChart = () => {
                 .attr("transform", "scale(1)");
 
             tooltip.transition().duration(200).style("opacity", 0);
+        })
+        .on("click", function (event, d) {
+            if (!props.clickable) return;
+
+            // Add click animation
+            d3.select(this)
+                .transition()
+                .duration(100)
+                .attr("transform", "scale(0.95)")
+                .transition()
+                .duration(100)
+                .attr("transform", "scale(1)");
+
+            emit("category-click", d.data);
         });
 
     // Labels

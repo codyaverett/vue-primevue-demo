@@ -20,6 +20,7 @@
         "@vueuse/core": "^13.9.0",
         "chart.js": "^3.9.1",
         "d3": "^7.9.0",
+        "d3-cloud": "^1.2.7",
         "pinia": "^2.1.6",
         "primeflex": "^3.3.0",
         "primeicons": "^6.0.0",
