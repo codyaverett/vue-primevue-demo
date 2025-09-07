@@ -172,6 +172,33 @@
             </div>
         </div>
 
+        <!-- Calendar Heatmap -->
+        <div class="grid mb-4">
+            <div class="col-12">
+                <Card>
+                    <template #title>
+                        <div
+                            class="flex align-items-center justify-content-between"
+                        >
+                            <span>Daily Idea Activity</span>
+                            <span class="text-sm text-500"
+                                >Ideas submitted per day in
+                                {{ currentYear }}</span
+                            >
+                        </div>
+                    </template>
+                    <template #content>
+                        <CalendarHeatmap
+                            :data="activityData"
+                            :year="currentYear"
+                            color-scheme="greens"
+                            @date-click="handleDateClick"
+                        />
+                    </template>
+                </Card>
+            </div>
+        </div>
+
         <!-- Recent Ideas Table -->
         <div class="col-12">
             <Card>
@@ -208,6 +235,7 @@ import StatusCard from "../components/StatusCard.vue";
 import TrendChart from "../components/TrendChart.vue";
 import CategoryChart from "../components/CategoryChart.vue";
 import TagCloud from "../components/TagCloud.vue";
+import CalendarHeatmap from "../components/CalendarHeatmap.vue";
 import IdeaTable from "../components/IdeaTable.vue";
 
 // PrimeVue Components
@@ -220,6 +248,7 @@ const store = useIdeasStore();
 
 // Chart controls
 const chartTimeRange = ref("7d");
+const currentYear = ref(new Date().getFullYear());
 
 const timeRangeOptions = [
     { label: "7 Days", value: "7d" },
@@ -304,6 +333,45 @@ const weeklyGrowth = computed(() => {
     return Math.floor(Math.random() * 20 + 5);
 });
 
+// Generate activity data for calendar heatmap from actual idea data
+const activityData = computed(() => {
+    const activityMap = new Map();
+    const today = new Date();
+    const yearStart = new Date(currentYear.value, 0, 1);
+    const yearEnd = new Date(currentYear.value, 11, 31);
+
+    // Count ideas per day based on createdAt dates
+    store.items.forEach((idea) => {
+        if (idea.createdAt) {
+            const ideaDate = new Date(idea.createdAt);
+
+            // Only include ideas from the selected year
+            if (
+                ideaDate >= yearStart &&
+                ideaDate <= yearEnd &&
+                ideaDate <= today
+            ) {
+                // Use UTC date parts to create consistent date string
+                const year = ideaDate.getUTCFullYear();
+                const month = String(ideaDate.getUTCMonth() + 1).padStart(
+                    2,
+                    "0"
+                );
+                const day = String(ideaDate.getUTCDate()).padStart(2, "0");
+                const dateStr = `${year}-${month}-${day}`;
+                const currentCount = activityMap.get(dateStr) || 0;
+                activityMap.set(dateStr, currentCount + 1);
+            }
+        }
+    });
+
+    // Convert map to array format expected by CalendarHeatmap
+    return Array.from(activityMap, ([date, count]) => ({
+        date,
+        count,
+    }));
+});
+
 // Methods
 const exportData = () => {
     const dataStr = JSON.stringify(store.items, null, 2);
@@ -341,6 +409,14 @@ const handleCategoryClick = (categoryData) => {
     router.push({
         path: "/ideas",
         query: { category: categoryData.category },
+    });
+};
+
+const handleDateClick = (dateData) => {
+    // Navigate to ideas page with date filter
+    router.push({
+        path: "/ideas",
+        query: { date: dateData.dateStr },
     });
 };
 
