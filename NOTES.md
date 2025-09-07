@@ -174,5 +174,7 @@ Beginning with **Phase 1 (Form Enhancement)** as it's marked REQUIRED. The curre
 
 - Starting to work on the dashboard, looks like the home page should just be the dashboard
 - I started working with D3 instead of chart.js because I wanted to make something cool and more custom than just something like a pie chart. We'll see how this goes, might end up crawling back to use chart.js if things get ugly
+    - D3 is working, so I'm going to stick with using D3 for this demo
+    - I am considering breaking some of the components out into their own files, this will make sense for reused components or complex component that have their own state to manage like an interesting data visualization
 
 ---
