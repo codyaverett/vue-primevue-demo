@@ -1,6 +1,6 @@
 <template>
     <div class="card">
-        <Toolbar class="mb-3">
+        <Toolbar v-if="!props.limit" class="mb-3">
             <template #start>
                 <div class="flex align-items-center gap-2">
                     <Button label="New" icon="pi pi-plus" @click="openNew" />
@@ -225,6 +225,13 @@ import ToggleButton from "primevue/togglebutton";
 import Paginator from "primevue/paginator";
 import IdeaForm from "./IdeaForm.vue";
 
+const props = defineProps({
+    limit: {
+        type: Number,
+        default: null,
+    },
+});
+
 const store = useIdeasStore();
 const categories = [
     "Platform",
@@ -290,6 +297,11 @@ const filtered = computed(() => {
             if (aVal > bVal) return sortOrder.value;
             return 0;
         });
+    }
+
+    // Apply limit if provided
+    if (props.limit && props.limit > 0) {
+        list = list.slice(0, props.limit);
     }
 
     return list;

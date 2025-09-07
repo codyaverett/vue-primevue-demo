@@ -15,6 +15,12 @@ const write = (v) => localStorage.setItem(LS_IDEAS, JSON.stringify(v));
 (() => {
     if (!read()) write(seed);
 })();
+
+// Force reset to seed data (useful for development)
+export function resetToSeed() {
+    write(seed);
+    return seed;
+}
 export async function listIdeas() {
     await sleep(300);
     return read() || [];
