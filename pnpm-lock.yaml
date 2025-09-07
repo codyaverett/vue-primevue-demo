@@ -3293,6 +3293,10 @@ snapshots:
     dependencies:
       d3-path: 3.1.0
 
+  d3-cloud@1.2.7:
+    dependencies:
+      d3-dispatch: 1.0.6
+
   d3-color@3.1.0: {}
 
   d3-contour@4.0.2:
@@ -3302,6 +3306,8 @@ snapshots:
   d3-delaunay@6.0.4:
     dependencies:
       delaunator: 5.0.1
+
+  d3-dispatch@1.0.6: {}
 
   d3-dispatch@3.0.1: {}
 

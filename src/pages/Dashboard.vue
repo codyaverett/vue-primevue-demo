@@ -137,7 +137,36 @@
                 <Card>
                     <template #title> Category Distribution </template>
                     <template #content>
-                        <CategoryChart :data="categoryData" :height="300" />
+                        <CategoryChart
+                            :data="categoryData"
+                            :height="300"
+                            @category-click="handleCategoryClick"
+                        />
+                    </template>
+                </Card>
+            </div>
+        </div>
+
+        <!-- Tag Cloud -->
+        <div class="grid mb-4">
+            <div class="col-12">
+                <Card>
+                    <template #title>
+                        <div
+                            class="flex align-items-center justify-content-between"
+                        >
+                            <span>Popular Tags</span>
+                            <span class="text-sm text-500"
+                                >Click a tag to filter ideas</span
+                            >
+                        </div>
+                    </template>
+                    <template #content>
+                        <TagCloud
+                            :tags="tagCloudData"
+                            :height="350"
+                            @tag-click="handleTagClick"
+                        />
                     </template>
                 </Card>
             </div>
@@ -178,6 +207,7 @@ import MetricCard from "../components/MetricCard.vue";
 import StatusCard from "../components/StatusCard.vue";
 import TrendChart from "../components/TrendChart.vue";
 import CategoryChart from "../components/CategoryChart.vue";
+import TagCloud from "../components/TagCloud.vue";
 import IdeaTable from "../components/IdeaTable.vue";
 
 // PrimeVue Components
@@ -250,6 +280,25 @@ const categoryData = computed(() => {
     }));
 });
 
+const tagCloudData = computed(() => {
+    const tagMap = {};
+
+    // Process all tags from all ideas
+    store.items.forEach((idea) => {
+        if (idea.tags && Array.isArray(idea.tags)) {
+            idea.tags.forEach((tag) => {
+                tagMap[tag] = (tagMap[tag] || 0) + 1;
+            });
+        }
+    });
+
+    // Convert to array format expected by TagCloud component
+    return Object.entries(tagMap)
+        .map(([text, count]) => ({ text, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 30); // Limit to top 30 tags
+});
+
 const weeklyGrowth = computed(() => {
     // Simulate weekly growth for demo
     return Math.floor(Math.random() * 20 + 5);
@@ -277,6 +326,22 @@ const resetData = async () => {
     resetToSeed();
     await store.refresh();
     console.log("Data reset complete. Items:", store.items.length, "items");
+};
+
+const handleTagClick = (tag) => {
+    // Navigate to ideas page with tag filter
+    router.push({
+        path: "/ideas",
+        query: { tag: tag.text },
+    });
+};
+
+const handleCategoryClick = (categoryData) => {
+    // Navigate to ideas page with category filter
+    router.push({
+        path: "/ideas",
+        query: { category: categoryData.category },
+    });
 };
 
 // Lifecycle
