@@ -1,5 +1,10 @@
 <template>
-    <div class="card">
+    <div class="card position-relative">
+        <LoadingOverlay
+            :visible="isLoading"
+            :message="loadingMessage"
+            :progress="loadingProgress"
+        />
         <Toolbar v-if="!props.limit" class="mb-3">
             <template #start>
                 <div class="flex align-items-center gap-2">
@@ -8,71 +13,159 @@
                         label="Refresh"
                         severity="secondary"
                         icon="pi pi-refresh"
-                        @click="store.refresh"
+                        :loading="isLoading"
+                        @click="handleRefresh"
                     />
                 </div>
             </template>
             <template #end>
-                <span class="p-input-icon-left mr-2"
-                    ><i class="pi pi-search" /><InputText
-                        v-model="search"
-                        placeholder="Search..."
-                /></span>
-                <MultiSelect
-                    v-model="filters.status"
-                    :options="statuses"
-                    placeholder="Filter by Status"
-                    class="mr-2"
-                    :max-selected-labels="2"
-                    :show-clear="true"
-                />
-                <MultiSelect
-                    v-model="filters.category"
-                    :options="categories"
-                    placeholder="Filter by Category"
-                    class="mr-2"
-                    :max-selected-labels="2"
-                    :show-clear="true"
-                />
-                <MultiSelect
-                    v-model="filters.tags"
-                    :options="availableTags"
-                    placeholder="Filter by Tags"
-                    class="mr-2"
-                    :max-selected-labels="2"
-                    :show-clear="true"
-                />
-                <span class="p-input-icon-left mr-2">
-                    <i class="pi pi-calendar" />
-                    <Calendar
-                        v-model="filters.dateRange"
-                        selection-mode="range"
-                        placeholder="Filter by Date Range"
-                        date-format="mm/dd/yy"
-                        :show-clear="true"
-                        :show-button-bar="true"
-                    />
-                </span>
-                <Dropdown
-                    v-model="selectedSort"
-                    :options="sortOptions"
-                    option-label="label"
-                    placeholder="Sort by"
-                    class="mr-2"
-                />
-                <ToggleButton
-                    v-model="grid"
-                    on-label="Grid"
-                    off-label="Table"
-                    :on-icon="'pi pi-th-large'"
-                    :off-icon="'pi pi-list'"
-                />
+                <div class="flex flex-wrap gap-2 align-items-center">
+                    <!-- Search Input -->
+                    <div class="search-box">
+                        <i class="pi pi-search" />
+                        <InputText
+                            v-model="search"
+                            placeholder="Search all fields..."
+                            class="w-15rem"
+                        />
+                    </div>
+
+                    <!-- Filters Group -->
+                    <div class="flex gap-2 filters-group">
+                        <MultiSelect
+                            v-model="filters.status"
+                            :options="statuses"
+                            placeholder="Status"
+                            class="w-10rem"
+                            :max-selected-labels="1"
+                            :show-clear="true"
+                            panel-class="compact-panel"
+                        >
+                            <template #value="slotProps">
+                                <div
+                                    v-if="
+                                        slotProps.value &&
+                                        slotProps.value.length
+                                    "
+                                    class="flex align-items-center gap-1"
+                                >
+                                    <i class="pi pi-flag text-xs" />
+                                    <span
+                                        >{{
+                                            slotProps.value.length
+                                        }}
+                                        selected</span
+                                    >
+                                </div>
+                                <span v-else>{{ slotProps.placeholder }}</span>
+                            </template>
+                        </MultiSelect>
+
+                        <MultiSelect
+                            v-model="filters.category"
+                            :options="categories"
+                            placeholder="Category"
+                            class="w-10rem"
+                            :max-selected-labels="1"
+                            :show-clear="true"
+                        >
+                            <template #value="slotProps">
+                                <div
+                                    v-if="
+                                        slotProps.value &&
+                                        slotProps.value.length
+                                    "
+                                    class="flex align-items-center gap-1"
+                                >
+                                    <i class="pi pi-folder text-xs" />
+                                    <span
+                                        >{{
+                                            slotProps.value.length
+                                        }}
+                                        selected</span
+                                    >
+                                </div>
+                                <span v-else>{{ slotProps.placeholder }}</span>
+                            </template>
+                        </MultiSelect>
+
+                        <MultiSelect
+                            v-model="filters.tags"
+                            :options="availableTags"
+                            placeholder="Tags"
+                            class="w-10rem"
+                            :max-selected-labels="1"
+                            :show-clear="true"
+                        >
+                            <template #value="slotProps">
+                                <div
+                                    v-if="
+                                        slotProps.value &&
+                                        slotProps.value.length
+                                    "
+                                    class="flex align-items-center gap-1"
+                                >
+                                    <i class="pi pi-tag text-xs" />
+                                    <span
+                                        >{{ slotProps.value.length }} tags</span
+                                    >
+                                </div>
+                                <span v-else>{{ slotProps.placeholder }}</span>
+                            </template>
+                        </MultiSelect>
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="date-picker">
+                        <Calendar
+                            v-model="filters.dateRange"
+                            selection-mode="range"
+                            placeholder="Date Range"
+                            date-format="mm/dd/yy"
+                            :show-clear="true"
+                            :show-button-bar="true"
+                            class="w-12rem"
+                        />
+                    </div>
+
+                    <!-- Sort and View Toggle -->
+                    <div class="flex gap-2 ml-auto">
+                        <Dropdown
+                            v-model="selectedSort"
+                            :options="sortOptions"
+                            option-label="label"
+                            placeholder="Sort by"
+                            class="w-11rem"
+                        >
+                            <template #value="slotProps">
+                                <div
+                                    v-if="slotProps.value"
+                                    class="flex align-items-center gap-1"
+                                >
+                                    <i class="pi pi-sort-amount-down text-xs" />
+                                    <span>{{ slotProps.value.label }}</span>
+                                </div>
+                                <span v-else>{{ slotProps.placeholder }}</span>
+                            </template>
+                        </Dropdown>
+
+                        <ToggleButton
+                            v-model="grid"
+                            on-label=""
+                            off-label=""
+                            :on-icon="'pi pi-th-large'"
+                            :off-icon="'pi pi-list'"
+                            class="view-toggle"
+                            aria-label="Toggle view"
+                        />
+                    </div>
+                </div>
             </template>
         </Toolbar>
 
         <!-- Enhanced pagination for grid view -->
         <div v-if="grid">
-            <div class="grid">
+            <TransitionGroup name="list" tag="div" class="grid">
                 <div
                     v-for="i in paginatedItems"
                     :key="i.id"
@@ -133,7 +226,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </TransitionGroup>
             <!-- Pagination for grid view -->
             <Paginator
                 v-if="totalRecords > rowsPerPage"
@@ -258,6 +351,7 @@
         <IdeaForm v-model="showForm" :value="editing" @submit="saveRow" />
     </div>
 </template>
+
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import { useIdeasStore } from "../stores/ideas";
@@ -275,6 +369,8 @@ import ToggleButton from "primevue/togglebutton";
 import Paginator from "primevue/paginator";
 import Calendar from "primevue/calendar";
 import IdeaForm from "./IdeaForm.vue";
+import LoadingOverlay from "./LoadingOverlay.vue";
+import { useLoading } from "../composables/useLoading";
 
 const props = defineProps({
     limit: {
@@ -303,7 +399,7 @@ const categories = [
     "Integrations",
     "Security",
 ];
-const statuses = ["New", "Planned", "In Progress", "Done"];
+const statuses = ["Active", "Under Review", "Implemented"];
 const search = ref("");
 const filters = ref({ status: [], category: [], tags: [], dateRange: null });
 const grid = ref(false);
@@ -312,6 +408,10 @@ const sortField = ref("votes");
 const sortOrder = ref(-1);
 const currentPage = ref(0);
 const rowsPerPage = ref(10);
+
+// Loading state
+const { isLoading, loadingMessage, loadingProgress, withLoading } =
+    useLoading();
 
 // Fuzzy search setup
 const { filteredItems: fuzzyFiltered } = useFuzzySearch(
@@ -506,12 +606,12 @@ watch(
     { immediate: true }
 );
 function statusSeverity(s) {
-    return s === "Done"
+    return s === "Implemented"
         ? "success"
-        : s === "In Progress"
-          ? "warning"
-          : s === "Planned"
-            ? "info"
+        : s === "Active"
+          ? "info"
+          : s === "Under Review"
+            ? "warning"
             : "secondary";
 }
 const showForm = ref(false),
@@ -521,7 +621,7 @@ function openNew() {
         title: "",
         description: "",
         category: "",
-        status: "New",
+        status: "Active",
         tags: [],
     };
     showForm.value = true;
@@ -550,6 +650,15 @@ const debouncedVote = useDebounceFn(async (row) => {
 async function vote(row) {
     if (votingId.value === row.id) return;
     debouncedVote(row);
+}
+
+// Handle refresh with loading state
+async function handleRefresh() {
+    await withLoading(async () => {
+        // Simulate network delay for demo
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        store.refresh();
+    }, "Refreshing ideas...");
 }
 
 // Add tag to filter when clicked
@@ -595,6 +704,78 @@ onMounted(() => {
     store.refresh();
 });
 </script>
+
+<style scoped>
+.position-relative {
+    position: relative;
+}
+
+/* Enhanced input and filter styling */
+.search-box {
+    position: relative;
+}
+
+.search-box .p-inputtext {
+    border-radius: 20px;
+    padding-left: 2.5rem;
+}
+
+.search-box i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-color-secondary);
+}
+
+.date-picker .p-calendar {
+    width: 100%;
+}
+
+.filters-group .p-multiselect,
+.date-picker .p-calendar,
+.p-dropdown {
+    border-radius: 8px;
+}
+
+.filters-group .p-multiselect:hover,
+.date-picker .p-calendar:hover,
+.p-dropdown:hover,
+.search-box .p-inputtext:hover {
+    border-color: var(--primary-color);
+}
+
+.filters-group .p-multiselect:focus,
+.date-picker .p-calendar:focus,
+.p-dropdown:focus,
+.search-box .p-inputtext:focus {
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
+
+.view-toggle {
+    min-width: auto;
+}
+
+/* Responsive toolbar */
+@media (max-width: 768px) {
+    .filters-group {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .search-box,
+    .date-picker {
+        width: 100%;
+    }
+
+    .search-box .p-inputtext,
+    .filters-group .p-multiselect,
+    .date-picker .p-calendar,
+    .p-dropdown {
+        width: 100% !important;
+    }
+}
+</style>
 <style scoped>
 .card {
     background: var(--surface-card);
