@@ -46,10 +46,10 @@ The project is a Vue 3 application using the Composition API with PrimeVue 3 for
 
 ### Phase 3: Dashboard
 
-- [ ] Add KPI metric cards
-- [ ] Integrate D3.js for data visualization
-- [ ] Create idea trends chart
-- [ ] Add quick action buttons
+- [x] Add KPI metric cards
+- [x] Integrate D3.js for data visualization
+- [x] Create idea trends chart
+- [x] Add quick action buttons
 
 ### Phase 4: Theme & Polish
 
@@ -169,5 +169,10 @@ Beginning with **Phase 1 (Form Enhancement)** as it's marked REQUIRED. The curre
 - Working on improving the ideas workspace now
     - Implemented all of the basic features for ideas space and it's working well
     - Added @VueUse dependency for a debouncing util, will use more of it's functions later. e.g. useColorMode etc.
+
+### Hour 3
+
+- Starting to work on the dashboard, looks like the home page should just be the dashboard
+- I started working with D3 instead of chart.js because I wanted to make something cool and more custom than just something like a pie chart. We'll see how this goes, might end up crawling back to use chart.js if things get ugly
 
 ---
