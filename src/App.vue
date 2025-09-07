@@ -1,8 +1,12 @@
 <template>
     <div class="min-h-screen surface-ground text-color">
         <HeaderBar />
-        <main class="p-3 md:p-4 lg:p-5">
-            <router-view />
+        <main>
+            <router-view v-slot="{ Component }">
+                <transition name="page" mode="out-in">
+                    <component :is="Component" />
+                </transition>
+            </router-view>
         </main>
     </div>
 </template>
