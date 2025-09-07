@@ -34,6 +34,14 @@
                     :max-selected-labels="2"
                     :show-clear="true"
                 />
+                <MultiSelect
+                    v-model="filters.tags"
+                    :options="availableTags"
+                    placeholder="Filter by Tags"
+                    class="mr-2"
+                    :max-selected-labels="2"
+                    :show-clear="true"
+                />
                 <Dropdown
                     v-model="selectedSort"
                     :options="sortOptions"
@@ -84,8 +92,20 @@
                                 :severity="statusSeverity(i.status)"
                             />
                         </div>
-                        <div class="text-600 text-sm">
-                            Tags: {{ (i.tags || []).join(", ") || "—" }}
+                        <div class="flex flex-wrap gap-1 mt-2">
+                            <Tag
+                                v-for="tag in i.tags || []"
+                                :key="tag"
+                                :value="tag"
+                                severity="secondary"
+                                class="text-xs cursor-pointer"
+                                @click="addTagFilter(tag)"
+                            />
+                            <span
+                                v-if="!i.tags || i.tags.length === 0"
+                                class="text-500 text-sm"
+                                >No tags</span
+                            >
                         </div>
                         <div class="flex justify-content-end gap-1 mt-3">
                             <Button
@@ -174,6 +194,25 @@
                     />
                 </template>
             </Column>
+            <Column field="tags" header="Tags">
+                <template #body="{ data }">
+                    <div class="flex flex-wrap gap-1">
+                        <Tag
+                            v-for="tag in data.tags || []"
+                            :key="tag"
+                            :value="tag"
+                            severity="secondary"
+                            class="text-xs cursor-pointer"
+                            @click="addTagFilter(tag)"
+                        />
+                        <span
+                            v-if="!data.tags || data.tags.length === 0"
+                            class="text-500"
+                            >—</span
+                        >
+                    </div>
+                </template>
+            </Column>
             <Column field="votes" header="Votes" sortable>
                 <template #body="{ data }">
                     <Button
@@ -230,6 +269,14 @@ const props = defineProps({
         type: Number,
         default: null,
     },
+    initialTagFilter: {
+        type: String,
+        default: null,
+    },
+    initialCategoryFilter: {
+        type: String,
+        default: null,
+    },
 });
 
 const store = useIdeasStore();
@@ -242,7 +289,7 @@ const categories = [
 ];
 const statuses = ["New", "Planned", "In Progress", "Done"];
 const search = ref("");
-const filters = ref({ status: [], category: [] });
+const filters = ref({ status: [], category: [], tags: [] });
 const grid = ref(false);
 const votingId = ref(null);
 const sortField = ref("votes");
@@ -266,6 +313,12 @@ const filtered = computed(() => {
     }
     if (filters.value.category && filters.value.category.length > 0) {
         list = list.filter((i) => filters.value.category.includes(i.category));
+    }
+    if (filters.value.tags && filters.value.tags.length > 0) {
+        list = list.filter((i) => {
+            if (!i.tags || i.tags.length === 0) return false;
+            return filters.value.tags.some((tag) => i.tags.includes(tag));
+        });
     }
 
     // Enhanced sorting
@@ -316,10 +369,43 @@ const paginatedItems = computed(() => {
 
 const totalRecords = computed(() => filtered.value.length);
 
+// Get all unique tags from all ideas
+const availableTags = computed(() => {
+    const tagSet = new Set();
+    store.items.forEach((item) => {
+        if (item.tags && Array.isArray(item.tags)) {
+            item.tags.forEach((tag) => tagSet.add(tag));
+        }
+    });
+    return Array.from(tagSet).sort();
+});
+
 // Reset page when filters change
 watch([search, filters], () => {
     currentPage.value = 0;
 });
+
+// Handle initial tag filter from props
+watch(
+    () => props.initialTagFilter,
+    (newTag) => {
+        if (newTag && !filters.value.tags.includes(newTag)) {
+            filters.value.tags = [newTag];
+        }
+    },
+    { immediate: true }
+);
+
+// Handle initial category filter from props
+watch(
+    () => props.initialCategoryFilter,
+    (newCategory) => {
+        if (newCategory && !filters.value.category.includes(newCategory)) {
+            filters.value.category = [newCategory];
+        }
+    },
+    { immediate: true }
+);
 function statusSeverity(s) {
     return s === "Done"
         ? "success"
@@ -365,6 +451,13 @@ const debouncedVote = useDebounceFn(async (row) => {
 async function vote(row) {
     if (votingId.value === row.id) return;
     debouncedVote(row);
+}
+
+// Add tag to filter when clicked
+function addTagFilter(tag) {
+    if (!filters.value.tags.includes(tag)) {
+        filters.value.tags = [...filters.value.tags, tag];
+    }
 }
 
 // Pagination functions
