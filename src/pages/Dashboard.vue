@@ -39,119 +39,57 @@
 
         <!-- KPI Metrics Cards -->
         <div class="grid mb-4">
-            <!-- Total Ideas Card -->
             <div class="col-12 md:col-6 lg:col-3">
-                <div class="metric-card surface-card p-4 border-round shadow-2">
-                    <div
-                        class="flex align-items-center justify-content-between mb-3"
-                    >
-                        <div>
-                            <span class="text-500 text-sm block mb-2"
-                                >Total Ideas</span
-                            >
-                            <div class="text-3xl font-bold text-primary">
-                                {{ totalIdeas }}
-                            </div>
-                        </div>
-                        <div
-                            class="metric-icon bg-primary-100 border-round p-3"
-                        >
-                            <i class="pi pi-lightbulb text-primary text-2xl" />
-                        </div>
-                    </div>
-                    <div class="flex align-items-center">
-                        <Tag
-                            :value="`+${weeklyGrowth}%`"
-                            severity="success"
-                            class="text-xs"
-                        />
-                        <span class="text-500 text-sm ml-2">vs last week</span>
-                    </div>
-                </div>
+                <MetricCard
+                    title="Total Ideas"
+                    :value="totalIdeas"
+                    icon="pi pi-lightbulb"
+                    color="primary"
+                    :trend="{
+                        value: `+${weeklyGrowth}%`,
+                        severity: 'success',
+                        label: 'vs last week',
+                    }"
+                />
             </div>
 
-            <!-- Active Ideas Card -->
             <div class="col-12 md:col-6 lg:col-3">
-                <div class="metric-card surface-card p-4 border-round shadow-2">
-                    <div
-                        class="flex align-items-center justify-content-between mb-3"
-                    >
-                        <div>
-                            <span class="text-500 text-sm block mb-2"
-                                >Active Ideas</span
-                            >
-                            <div class="text-3xl font-bold text-green-600">
-                                {{ activeIdeas }}
-                            </div>
-                        </div>
-                        <div class="metric-icon bg-green-100 border-round p-3">
-                            <i
-                                class="pi pi-check-circle text-green-600 text-2xl"
-                            />
-                        </div>
-                    </div>
-                    <div class="text-500 text-sm">
-                        <span class="font-semibold"
-                            >{{ activePercentage }}%</span
-                        >
-                        of total
-                    </div>
-                </div>
+                <MetricCard
+                    title="Active Ideas"
+                    :value="activeIdeas"
+                    icon="pi pi-check-circle"
+                    color="green"
+                    :subtitle="{
+                        bold: `${activePercentage}%`,
+                        text: ' of total',
+                    }"
+                />
             </div>
 
-            <!-- Total Votes Card -->
             <div class="col-12 md:col-6 lg:col-3">
-                <div class="metric-card surface-card p-4 border-round shadow-2">
-                    <div
-                        class="flex align-items-center justify-content-between mb-3"
-                    >
-                        <div>
-                            <span class="text-500 text-sm block mb-2"
-                                >Total Votes</span
-                            >
-                            <div class="text-3xl font-bold text-orange-600">
-                                {{ totalVotes }}
-                            </div>
-                        </div>
-                        <div class="metric-icon bg-orange-100 border-round p-3">
-                            <i
-                                class="pi pi-thumbs-up text-orange-600 text-2xl"
-                            />
-                        </div>
-                    </div>
-                    <div class="text-500 text-sm">
-                        Avg
-                        <span class="font-semibold">{{ avgVotes }}</span> per
-                        idea
-                    </div>
-                </div>
+                <MetricCard
+                    title="Total Votes"
+                    :value="totalVotes"
+                    icon="pi pi-thumbs-up"
+                    color="orange"
+                    :subtitle="{ text: `Avg ${avgVotes} per idea` }"
+                />
             </div>
 
-            <!-- Top Voted Card -->
             <div class="col-12 md:col-6 lg:col-3">
-                <div class="metric-card surface-card p-4 border-round shadow-2">
-                    <div
-                        class="flex align-items-center justify-content-between mb-3"
-                    >
-                        <div>
-                            <span class="text-500 text-sm block mb-2"
-                                >Top Voted</span
-                            >
-                            <div
-                                class="text-xl font-bold text-purple-600 text-overflow-ellipsis overflow-hidden white-space-nowrap"
-                            >
-                                {{ topVotedTitle }}
-                            </div>
-                        </div>
-                        <div class="metric-icon bg-purple-100 border-round p-3">
-                            <i class="pi pi-star text-purple-600 text-2xl" />
-                        </div>
-                    </div>
-                    <div class="text-500 text-sm">
-                        <span class="font-semibold">{{ topVotedVotes }}</span>
-                        votes
-                    </div>
-                </div>
+                <MetricCard
+                    title="Top Voted"
+                    :value="topVotedTitle"
+                    icon="pi pi-star"
+                    color="purple"
+                    :subtitle="{
+                        bold: topVotedVotes.toString(),
+                        text: ' votes',
+                    }"
+                    :format-value="
+                        (v) => (v.length > 20 ? v.substring(0, 20) + '...' : v)
+                    "
+                />
             </div>
         </div>
 
@@ -162,26 +100,7 @@
                 :key="status"
                 class="col-12 md:col-6 lg:col-3"
             >
-                <div
-                    class="status-card surface-card p-3 border-round shadow-1 hover:shadow-3 transition-all transition-duration-300"
-                >
-                    <div
-                        class="flex align-items-center justify-content-between"
-                    >
-                        <div>
-                            <div class="text-500 text-sm mb-1">
-                                {{ status }}
-                            </div>
-                            <div class="text-2xl font-bold">
-                                {{ count }}
-                            </div>
-                        </div>
-                        <Tag
-                            :value="status"
-                            :severity="getStatusSeverity(status)"
-                        />
-                    </div>
-                </div>
+                <StatusCard :status="status" :count="count" />
             </div>
         </div>
 
@@ -205,10 +124,9 @@
                         </div>
                     </template>
                     <template #content>
-                        <div
-                            ref="trendChartRef"
-                            class="chart-container"
-                            style="height: 300px"
+                        <TrendChart
+                            :time-range="chartTimeRange"
+                            :height="300"
                         />
                     </template>
                 </Card>
@@ -219,11 +137,7 @@
                 <Card>
                     <template #title> Category Distribution </template>
                     <template #content>
-                        <div
-                            ref="categoryChartRef"
-                            class="chart-container"
-                            style="height: 300px"
-                        />
+                        <CategoryChart :data="categoryData" :height="300" />
                     </template>
                 </Card>
             </div>
@@ -254,23 +168,27 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import * as d3 from "d3";
-import IdeaTable from "../components/IdeaTable.vue";
 import { useIdeasStore } from "../stores/ideas";
 import { resetToSeed } from "../services/api";
+
+// Components
+import MetricCard from "../components/MetricCard.vue";
+import StatusCard from "../components/StatusCard.vue";
+import TrendChart from "../components/TrendChart.vue";
+import CategoryChart from "../components/CategoryChart.vue";
+import IdeaTable from "../components/IdeaTable.vue";
+
+// PrimeVue Components
 import Button from "primevue/button";
 import Card from "primevue/card";
-import Tag from "primevue/tag";
 import SelectButton from "primevue/selectbutton";
 
 const router = useRouter();
 const store = useIdeasStore();
 
-// Chart refs
-const trendChartRef = ref(null);
-const categoryChartRef = ref(null);
+// Chart controls
 const chartTimeRange = ref("7d");
 
 const timeRangeOptions = [
@@ -279,7 +197,7 @@ const timeRangeOptions = [
     { label: "90 Days", value: "90d" },
 ];
 
-// Computed KPI metrics - directly computed from store.items
+// Computed KPI metrics
 const totalIdeas = computed(() => store.items.length);
 
 const activeIdeas = computed(() => {
@@ -319,22 +237,25 @@ const statusDistribution = computed(() => {
     return distribution;
 });
 
+const categoryData = computed(() => {
+    const categoryMap = store.items.reduce((acc, idea) => {
+        const category = idea.category || "Other";
+        acc[category] = (acc[category] || 0) + 1;
+        return acc;
+    }, {});
+
+    return Object.entries(categoryMap).map(([key, value]) => ({
+        category: key,
+        count: value,
+    }));
+});
+
 const weeklyGrowth = computed(() => {
     // Simulate weekly growth for demo
     return Math.floor(Math.random() * 20 + 5);
 });
 
-// Helper functions
-const getStatusSeverity = (status) => {
-    const severityMap = {
-        Active: "success",
-        "Under Review": "warning",
-        Implemented: "info",
-        Archived: "secondary",
-    };
-    return severityMap[status] || "secondary";
-};
-
+// Methods
 const exportData = () => {
     const dataStr = JSON.stringify(store.items, null, 2);
     const dataUri =
@@ -349,8 +270,6 @@ const exportData = () => {
 
 const refreshData = async () => {
     await store.refresh();
-    await nextTick();
-    drawCharts();
 };
 
 const resetData = async () => {
@@ -358,338 +277,19 @@ const resetData = async () => {
     resetToSeed();
     await store.refresh();
     console.log("Data reset complete. Items:", store.items.length, "items");
-    await nextTick();
-    drawCharts();
 };
 
-const drawCharts = () => {
-    if (trendChartRef.value) drawTrendChart();
-    if (categoryChartRef.value) drawCategoryChart();
-};
-
-// D3.js Chart Functions
-const drawTrendChart = () => {
-    if (!trendChartRef.value) return;
-
-    // Clear previous chart
-    d3.select(trendChartRef.value).selectAll("*").remove();
-
-    const container = trendChartRef.value;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    const margin = { top: 20, right: 30, bottom: 40, left: 50 };
-
-    // Generate sample data based on time range
-    const days =
-        chartTimeRange.value === "7d"
-            ? 7
-            : chartTimeRange.value === "30d"
-              ? 30
-              : 90;
-    const data = Array.from({ length: days }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (days - i - 1));
-        return {
-            date: date,
-            count: Math.floor(Math.random() * 10 + 5 + i * 0.5),
-        };
-    });
-
-    const svg = d3
-        .select(trendChartRef.value)
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height);
-
-    const g = svg
-        .append("g")
-        .attr("transform", `translate(${margin.left},${margin.top})`);
-
-    const x = d3
-        .scaleTime()
-        .domain(d3.extent(data, (d) => d.date))
-        .range([0, width - margin.left - margin.right]);
-
-    const y = d3
-        .scaleLinear()
-        .domain([0, d3.max(data, (d) => d.count)])
-        .nice()
-        .range([height - margin.top - margin.bottom, 0]);
-
-    // Create gradient
-    const gradient = svg
-        .append("defs")
-        .append("linearGradient")
-        .attr("id", "area-gradient")
-        .attr("gradientUnits", "userSpaceOnUse")
-        .attr("x1", 0)
-        .attr("y1", y(0))
-        .attr("x2", 0)
-        .attr("y2", y(d3.max(data, (d) => d.count)));
-
-    gradient
-        .append("stop")
-        .attr("offset", "0%")
-        .attr("stop-color", "#8B5CF6")
-        .attr("stop-opacity", 0.1);
-
-    gradient
-        .append("stop")
-        .attr("offset", "100%")
-        .attr("stop-color", "#8B5CF6")
-        .attr("stop-opacity", 0.6);
-
-    // Area
-    const area = d3
-        .area()
-        .x((d) => x(d.date))
-        .y0(y(0))
-        .y1((d) => y(d.count))
-        .curve(d3.curveMonotoneX);
-
-    g.append("path")
-        .datum(data)
-        .attr("fill", "url(#area-gradient)")
-        .attr("d", area);
-
-    // Line
-    const line = d3
-        .line()
-        .x((d) => x(d.date))
-        .y((d) => y(d.count))
-        .curve(d3.curveMonotoneX);
-
-    g.append("path")
-        .datum(data)
-        .attr("fill", "none")
-        .attr("stroke", "#8B5CF6")
-        .attr("stroke-width", 2)
-        .attr("d", line);
-
-    // Dots
-    g.selectAll(".dot")
-        .data(data)
-        .enter()
-        .append("circle")
-        .attr("class", "dot")
-        .attr("cx", (d) => x(d.date))
-        .attr("cy", (d) => y(d.count))
-        .attr("r", 4)
-        .attr("fill", "#8B5CF6");
-
-    // X Axis
-    g.append("g")
-        .attr(
-            "transform",
-            `translate(0,${height - margin.top - margin.bottom})`
-        )
-        .call(
-            d3
-                .axisBottom(x)
-                .tickFormat(d3.timeFormat(days <= 7 ? "%a" : "%b %d"))
-                .ticks(days <= 7 ? days : 6)
-        )
-        .style("color", "#6b7280");
-
-    // Y Axis
-    g.append("g").call(d3.axisLeft(y).ticks(5)).style("color", "#6b7280");
-};
-
-const drawCategoryChart = () => {
-    if (!categoryChartRef.value) return;
-
-    // Clear previous chart
-    d3.select(categoryChartRef.value).selectAll("*").remove();
-
-    const container = categoryChartRef.value;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    const radius = Math.min(width, height) / 2;
-
-    // Group ideas by category
-    const categoryData = store.items.reduce((acc, idea) => {
-        const category = idea.category || "Other";
-        acc[category] = (acc[category] || 0) + 1;
-        return acc;
-    }, {});
-
-    const data = Object.entries(categoryData).map(([key, value]) => ({
-        category: key,
-        count: value,
-    }));
-
-    if (data.length === 0) {
-        // Show "No Data" message
-        d3.select(categoryChartRef.value)
-            .append("div")
-            .style("text-align", "center")
-            .style("padding-top", "100px")
-            .style("color", "#6b7280")
-            .text("No category data available");
-        return;
-    }
-
-    const svg = d3
-        .select(categoryChartRef.value)
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height);
-
-    const g = svg
-        .append("g")
-        .attr("transform", `translate(${width / 2},${height / 2})`);
-
-    const color = d3
-        .scaleOrdinal()
-        .domain(data.map((d) => d.category))
-        .range([
-            "#8B5CF6",
-            "#EC4899",
-            "#10B981",
-            "#F59E0B",
-            "#3B82F6",
-            "#EF4444",
-        ]);
-
-    const pie = d3
-        .pie()
-        .value((d) => d.count)
-        .sort(null);
-
-    const arc = d3
-        .arc()
-        .innerRadius(radius * 0.5)
-        .outerRadius(radius * 0.8);
-
-    const labelArc = d3
-        .arc()
-        .innerRadius(radius * 0.9)
-        .outerRadius(radius * 0.9);
-
-    // Pie slices
-    const arcs = g
-        .selectAll(".arc")
-        .data(pie(data))
-        .enter()
-        .append("g")
-        .attr("class", "arc");
-
-    arcs.append("path")
-        .attr("d", arc)
-        .attr("fill", (d) => color(d.data.category))
-        .attr("stroke", "white")
-        .attr("stroke-width", 2)
-        .style("cursor", "pointer")
-        .on("mouseover", function () {
-            d3.select(this)
-                .transition()
-                .duration(200)
-                .attr("transform", "scale(1.05)");
-        })
-        .on("mouseout", function () {
-            d3.select(this)
-                .transition()
-                .duration(200)
-                .attr("transform", "scale(1)");
-        });
-
-    // Labels
-    arcs.append("text")
-        .attr("transform", (d) => `translate(${labelArc.centroid(d)})`)
-        .attr("text-anchor", "middle")
-        .style("font-size", "12px")
-        .style("fill", "#374151")
-        .text((d) =>
-            d.data.count > 0 ? `${d.data.category} (${d.data.count})` : ""
-        );
-
-    // Center text
-    g.append("text")
-        .attr("text-anchor", "middle")
-        .attr("dy", "-0.5em")
-        .style("font-size", "24px")
-        .style("font-weight", "bold")
-        .style("fill", "#1f2937")
-        .text(store.items.length);
-
-    g.append("text")
-        .attr("text-anchor", "middle")
-        .attr("dy", "1em")
-        .style("font-size", "14px")
-        .style("fill", "#6b7280")
-        .text("Total Ideas");
-};
-
-// Lifecycle hooks
+// Lifecycle
 onMounted(async () => {
     console.log("Dashboard mounted, loading data...");
     await store.refresh();
     console.log("Loaded", store.items.length, "ideas");
-    await nextTick();
-    drawCharts();
-
-    // Add resize listener
-    window.addEventListener("resize", handleResize);
 });
-
-// Cleanup on unmount
-onUnmounted(() => {
-    window.removeEventListener("resize", handleResize);
-});
-
-// Watch for data changes
-watch(
-    () => store.items,
-    () => {
-        nextTick(() => {
-            drawCategoryChart();
-        });
-    },
-    { deep: true }
-);
-
-// Watch for time range changes
-watch(chartTimeRange, () => {
-    drawTrendChart();
-});
-
-// Redraw charts on window resize
-const handleResize = () => {
-    drawCharts();
-};
 </script>
 
 <style scoped>
 .dashboard-container {
     padding: 1rem;
-}
-
-.metric-card {
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-.metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
-.metric-icon {
-    background: linear-gradient(
-        135deg,
-        rgba(139, 92, 246, 0.1) 0%,
-        rgba(139, 92, 246, 0.05) 100%
-    );
-}
-
-.status-card {
-    cursor: pointer;
-}
-
-.chart-container {
-    position: relative;
-    width: 100%;
 }
 
 .quick-actions {
@@ -717,12 +317,8 @@ const handleResize = () => {
 }
 
 @media (max-width: 768px) {
-    .metric-card {
-        margin-bottom: 1rem;
-    }
-
-    .chart-container {
-        height: 250px !important;
+    .dashboard-container {
+        padding: 0.5rem;
     }
 }
 </style>
