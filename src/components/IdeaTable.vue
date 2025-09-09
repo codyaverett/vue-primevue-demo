@@ -547,6 +547,10 @@ const props = defineProps({
         type: String,
         default: null,
     },
+    initialStatusFilter: {
+        type: String,
+        default: null,
+    },
 });
 
 const store = useIdeasStore();
@@ -758,9 +762,27 @@ watch(
             // Clear other filters when navigating with date
             if (!props.initialTagFilter) filters.value.tags = [];
             if (!props.initialCategoryFilter) filters.value.category = [];
+            if (!props.initialStatusFilter) filters.value.status = [];
         } else {
             // Clear date range if no initial filter
             filters.value.dateRange = null;
+        }
+    },
+    { immediate: true }
+);
+
+// Handle initial status filter from props (from status badges click)
+watch(
+    () => props.initialStatusFilter,
+    (newStatus) => {
+        if (newStatus && !filters.value.status.includes(newStatus)) {
+            filters.value.status = [newStatus];
+            // Clear other filters when navigating with status
+            if (!props.initialTagFilter) filters.value.tags = [];
+            if (!props.initialCategoryFilter) filters.value.category = [];
+            if (!props.initialDateFilter) filters.value.dateRange = null;
+        } else if (!newStatus) {
+            filters.value.status = [];
         }
     },
     { immediate: true }

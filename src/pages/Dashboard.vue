@@ -1,223 +1,195 @@
 <template>
     <div class="dashboard-container">
-        <!-- Quick Actions Bar -->
-        <div class="quick-actions mb-4">
-            <div class="flex flex-wrap gap-2">
-                <Button
-                    label="Submit New Idea"
-                    icon="pi pi-plus"
-                    class="p-button-primary"
-                    @click="router.push('/submit')"
-                />
-                <Button
-                    label="View All Ideas"
-                    icon="pi pi-list"
-                    class="p-button-secondary"
-                    @click="router.push('/ideas')"
-                />
-                <Button
-                    label="Export Data"
-                    icon="pi pi-download"
-                    class="p-button-info"
-                    @click="exportData"
-                />
-                <Button
-                    label="Refresh"
-                    icon="pi pi-refresh"
-                    class="p-button-outlined"
-                    :loading="store.loading"
-                    @click="refreshData"
-                />
-                <Button
-                    label="Reset Data"
-                    icon="pi pi-replay"
-                    class="p-button-warning p-button-outlined"
-                    @click="resetData"
-                />
-            </div>
-        </div>
-
-        <!-- KPI Metrics Cards -->
-        <div class="grid mb-4">
-            <div class="col-12 md:col-6 lg:col-3">
-                <MetricCard
-                    title="Total Ideas"
-                    :value="totalIdeas"
-                    icon="pi pi-lightbulb"
-                    color="primary"
-                    :trend="{
-                        value: `+${weeklyGrowth}%`,
-                        severity: 'success',
-                        label: 'vs last week',
-                    }"
-                />
+        <div class="dashboard-content">
+            <!-- Quick Actions Bar -->
+            <div class="quick-actions mb-4">
+                <div class="flex flex-wrap gap-2">
+                    <Button
+                        label="Submit New Idea"
+                        icon="pi pi-plus"
+                        class="p-button-primary"
+                        @click="router.push('/submit')"
+                    />
+                    <Button
+                        label="View All Ideas"
+                        icon="pi pi-list"
+                        class="p-button-secondary"
+                        @click="router.push('/ideas')"
+                    />
+                    <Button
+                        label="Export Data"
+                        icon="pi pi-download"
+                        class="p-button-info"
+                        @click="exportData"
+                    />
+                    <Button
+                        label="Refresh"
+                        icon="pi pi-refresh"
+                        class="p-button-outlined"
+                        :loading="store.loading"
+                        @click="refreshData"
+                    />
+                    <Button
+                        label="Reset Data"
+                        icon="pi pi-replay"
+                        class="p-button-warning p-button-outlined"
+                        @click="resetData"
+                    />
+                </div>
             </div>
 
-            <div class="col-12 md:col-6 lg:col-3">
-                <MetricCard
-                    title="Active Ideas"
-                    :value="activeIdeas"
-                    icon="pi pi-check-circle"
-                    color="green"
-                    :subtitle="{
-                        bold: `${activePercentage}%`,
-                        text: ' of total',
-                    }"
-                />
+            <!-- KPI Metrics Cards -->
+            <div class="grid mb-3 justify-content-center">
+                <!-- Total Ideas with integrated status badges -->
+                <div class="col-12 md:col-6 lg:col-5">
+                    <TotalIdeasCard
+                        :total-ideas="totalIdeas"
+                        :status-distribution="statusDistribution"
+                        :weekly-growth="weeklyGrowth"
+                        @status-click="handleStatusClick"
+                    />
+                </div>
+
+                <!-- Combined Metrics Card -->
+                <div class="col-12 md:col-6 lg:col-7">
+                    <CombinedMetricsCard
+                        :total-votes="totalVotes"
+                        :avg-votes="avgVotes"
+                        :top-voted-votes="topVotedVotes"
+                        :top-voted-title="topVotedTitle"
+                        :active-percentage="activePercentage"
+                        :active-ideas="activeIdeas"
+                    />
+                </div>
             </div>
 
-            <div class="col-12 md:col-6 lg:col-3">
-                <MetricCard
-                    title="Total Votes"
-                    :value="totalVotes"
-                    icon="pi pi-thumbs-up"
-                    color="orange"
-                    :subtitle="{ text: `Avg ${avgVotes} per idea` }"
-                />
-            </div>
-
-            <div class="col-12 md:col-6 lg:col-3">
-                <MetricCard
-                    title="Top Voted"
-                    :value="topVotedTitle"
-                    icon="pi pi-star"
-                    color="purple"
-                    :subtitle="{
-                        bold: topVotedVotes.toString(),
-                        text: ' votes',
-                    }"
-                    :format-value="
-                        (v) => (v.length > 20 ? v.substring(0, 20) + '...' : v)
-                    "
-                />
-            </div>
-        </div>
-
-        <!-- Status Distribution Cards -->
-        <div class="grid mb-4">
-            <div
-                v-for="(count, status) in statusDistribution"
-                :key="status"
-                class="col-12 md:col-6 lg:col-3"
-            >
-                <StatusCard :status="status" :count="count" />
-            </div>
-        </div>
-
-        <!-- Data Visualizations -->
-        <div class="grid mb-4">
-            <!-- Trend Chart -->
-            <div class="col-12 lg:col-8 flex">
-                <Card class="h-full flex-1">
-                    <template #title>
-                        <div
-                            class="flex align-items-center justify-content-between"
-                        >
-                            <span>Ideas Trend</span>
-                            <SelectButton
-                                v-model="chartTimeRange"
-                                :options="timeRangeOptions"
-                                option-label="label"
-                                option-value="value"
-                                class="text-sm"
+            <div class="grid mb-3 justify-content-center">
+                <!-- Category Distribution -->
+                <div class="col-12 md:col-6 lg:col-5">
+                    <Card class="h-full flex-1">
+                        <template #title> Category Distribution </template>
+                        <template #content>
+                            <CategoryChart
+                                :data="categoryData"
+                                :height="300"
+                                @category-click="handleCategoryClick"
                             />
-                        </div>
-                    </template>
-                    <template #content>
-                        <TrendChart
-                            :time-range="chartTimeRange"
-                            :height="300"
-                        />
-                    </template>
-                </Card>
-            </div>
+                        </template>
+                    </Card>
+                </div>
 
-            <!-- Category Distribution -->
-            <div class="col-12 lg:col-4 flex">
-                <Card class="h-full flex-1">
-                    <template #title> Category Distribution </template>
-                    <template #content>
-                        <CategoryChart
-                            :data="categoryData"
-                            :height="300"
-                            @category-click="handleCategoryClick"
-                        />
-                    </template>
-                </Card>
-            </div>
-        </div>
-
-        <!-- Tag Cloud and Calendar Heatmap Side by Side -->
-        <div class="grid mb-4">
-            <!-- Tag Cloud -->
-            <div class="col-12 lg:col-6 flex">
-                <Card class="h-full flex-1">
-                    <template #title>
-                        <div
-                            class="flex align-items-center justify-content-between"
-                        >
-                            <span>Popular Tags</span>
-                            <span class="text-sm text-500"
-                                >Click a tag to filter ideas</span
-                            >
-                        </div>
-                    </template>
-                    <template #content>
-                        <TagCloud
-                            :tags="tagCloudData"
-                            :height="350"
-                            @tag-click="handleTagClick"
-                        />
-                    </template>
-                </Card>
-            </div>
-
-            <!-- Calendar Heatmap -->
-            <div class="col-12 lg:col-6 flex">
-                <Card class="h-full flex-1">
-                    <template #title>
-                        <div
-                            class="flex align-items-center justify-content-between"
-                        >
-                            <span>Daily Idea Activity</span>
-                            <span class="text-sm text-500"
-                                >Ideas submitted per day in
-                                {{ currentYear }}</span
-                            >
-                        </div>
-                    </template>
-                    <template #content>
-                        <CalendarHeatmap
-                            :data="activityData"
-                            :year="currentYear"
-                            color-scheme="greens"
-                            @date-click="handleDateClick"
-                        />
-                    </template>
-                </Card>
-            </div>
-        </div>
-
-        <!-- Recent Ideas Table -->
-        <div class="col-12">
-            <Card>
-                <template #title>
-                    <div
-                        class="flex align-items-center justify-content-between"
-                    >
-                        <span>Recent Ideas</span>
-                        <Button
-                            label="View All"
-                            icon="pi pi-arrow-right"
-                            class="p-button-text p-button-sm"
-                            @click="router.push('/ideas')"
-                        />
+                <!-- Daily Idea Activity - Full Width Below Metrics -->
+                <div class="col-12 md:col-6 lg:col-7">
+                    <div class="col-6">
+                        <Card class="compact-card">
+                            <template #title>
+                                <div
+                                    class="flex align-items-center justify-content-between"
+                                >
+                                    <span class="text-base"
+                                        >Daily Idea Activity</span
+                                    >
+                                    <span class="text-xs text-500">{{
+                                        currentYear
+                                    }}</span>
+                                </div>
+                            </template>
+                            <template #content>
+                                <div class="calendar-wrapper-compact">
+                                    <CalendarHeatmap
+                                        :data="activityData"
+                                        :year="currentYear"
+                                        color-scheme="greens"
+                                        :cell-size="10"
+                                        :show-day-labels="false"
+                                        @date-click="handleDateClick"
+                                    />
+                                </div>
+                            </template>
+                        </Card>
                     </div>
-                </template>
-                <template #content>
-                    <IdeaTable :limit="5" />
-                </template>
-            </Card>
+                </div>
+            </div>
+
+            <!-- Data Visualizations -->
+            <div class="grid mb-4">
+                <!-- Trend Chart -->
+                <div class="col-12 lg:col-8 flex">
+                    <Card class="h-full flex-1">
+                        <template #title>
+                            <div
+                                class="flex align-items-center justify-content-between"
+                            >
+                                <span>Ideas Trend</span>
+                                <SelectButton
+                                    v-model="chartTimeRange"
+                                    :options="timeRangeOptions"
+                                    option-label="label"
+                                    option-value="value"
+                                    class="text-sm"
+                                />
+                            </div>
+                        </template>
+                        <template #content>
+                            <TrendChart
+                                :time-range="chartTimeRange"
+                                :height="300"
+                            />
+                        </template>
+                    </Card>
+                </div>
+            </div>
+
+            <!-- Popular Tags -->
+            <div class="grid mb-4">
+                <div class="col-12">
+                    <Card>
+                        <template #title>
+                            <div
+                                class="flex flex-column sm:flex-row align-items-start sm:align-items-center justify-content-between gap-2"
+                            >
+                                <span>Popular Tags</span>
+                                <span class="text-sm text-500"
+                                    >Click a tag to filter ideas</span
+                                >
+                            </div>
+                        </template>
+                        <template #content>
+                            <div class="tag-cloud-wrapper">
+                                <TagCloud
+                                    :tags="tagCloudData"
+                                    :height="300"
+                                    @tag-click="handleTagClick"
+                                />
+                            </div>
+                        </template>
+                    </Card>
+                </div>
+            </div>
+
+            <!-- Recent Ideas Table -->
+            <div class="grid">
+                <div class="col-12">
+                    <Card>
+                        <template #title>
+                            <div
+                                class="flex align-items-center justify-content-between"
+                            >
+                                <span>Recent Ideas</span>
+                                <Button
+                                    label="View All"
+                                    icon="pi pi-arrow-right"
+                                    class="p-button-text p-button-sm"
+                                    @click="router.push('/ideas')"
+                                />
+                            </div>
+                        </template>
+                        <template #content>
+                            <IdeaTable :limit="5" />
+                        </template>
+                    </Card>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -229,8 +201,8 @@ import { useIdeasStore } from "../stores/ideas";
 import { resetToSeed } from "../services/api";
 
 // Components
-import MetricCard from "../components/MetricCard.vue";
-import StatusCard from "../components/StatusCard.vue";
+import TotalIdeasCard from "../components/TotalIdeasCard.vue";
+import CombinedMetricsCard from "../components/CombinedMetricsCard.vue";
 import TrendChart from "../components/TrendChart.vue";
 import CategoryChart from "../components/CategoryChart.vue";
 import TagCloud from "../components/TagCloud.vue";
@@ -419,6 +391,14 @@ const handleDateClick = (dateData) => {
     });
 };
 
+const handleStatusClick = (status) => {
+    // Navigate to ideas page with status filter
+    router.push({
+        path: "/ideas",
+        query: { status: status },
+    });
+};
+
 // Lifecycle
 onMounted(async () => {
     console.log("Dashboard mounted, loading data...");
@@ -430,6 +410,15 @@ onMounted(async () => {
 <style scoped>
 .dashboard-container {
     padding: 1rem;
+    width: 100%;
+    overflow-x: hidden;
+    display: flex;
+    justify-content: center;
+}
+
+.dashboard-content {
+    width: 100%;
+    max-width: 1400px;
 }
 
 .quick-actions {
@@ -451,14 +440,69 @@ onMounted(async () => {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* Compact card for calendar heatmap */
+.compact-card :deep(.p-card-content) {
+    padding: 0.75rem;
+}
+
+.calendar-wrapper-compact {
+    max-height: 180px;
+    overflow: hidden;
+}
+
 :deep(.p-selectbutton .p-button) {
     padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
 }
 
+/* Status badges container */
+.status-badges-container {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Prevent overflow in tag cloud and calendar containers */
+.tag-cloud-wrapper,
+.calendar-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+/* Ensure proper spacing on smaller screens */
+@media (max-width: 1200px) {
+    .tag-cloud-wrapper,
+    .calendar-wrapper {
+        min-height: 300px;
+    }
+}
+
 @media (max-width: 768px) {
     .dashboard-container {
         padding: 0.5rem;
+    }
+
+    .tag-cloud-wrapper {
+        overflow-x: hidden;
+        min-height: 250px;
+    }
+
+    .calendar-wrapper {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+
+    /* Make buttons smaller on mobile */
+    :deep(.p-button) {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    /* Reduce card padding on mobile */
+    :deep(.p-card .p-card-content) {
+        padding: 0.75rem;
     }
 }
 </style>

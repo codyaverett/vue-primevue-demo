@@ -4,6 +4,7 @@
             :initial-tag-filter="tagFilter"
             :initial-category-filter="categoryFilter"
             :initial-date-filter="dateFilter"
+            :initial-status-filter="statusFilter"
         />
     </div>
 </template>
@@ -22,6 +23,9 @@ const categoryFilter = computed(() => route.query.category || null);
 
 // Get date filter from query param
 const dateFilter = computed(() => route.query.date || null);
+
+// Get status filter from query param
+const statusFilter = computed(() => route.query.status || null);
 </script>
 
 <style scoped>
