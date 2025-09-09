@@ -11,9 +11,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { ref, watch } from "vue";
 import * as d3 from "d3";
 import cloud from "d3-cloud";
+import { useD3Resize } from "../composables/useD3Resize";
 
 const props = defineProps({
     tags: {
@@ -68,7 +69,6 @@ const emit = defineEmits(["tag-click"]);
 
 const cloudContainer = ref(null);
 const loading = ref(false);
-let resizeObserver = null;
 
 const processTagData = () => {
     if (!props.tags || props.tags.length === 0) {
@@ -80,11 +80,25 @@ const processTagData = () => {
     const maxCount = Math.max(...counts);
     const minCount = Math.min(...counts);
 
-    // Create scale for font sizes
+    // Create scale for font sizes - responsive to container width
+    const container = cloudContainer.value;
+    const width = container.clientWidth;
+
+    // Adjust max font size based on container width
+    const responsiveMaxFontSize = Math.min(
+        props.maxFontSize,
+        Math.max(24, width / 15) // Scale down for smaller containers
+    );
+
+    const responsiveMinFontSize = Math.min(
+        props.minFontSize,
+        responsiveMaxFontSize / 4
+    );
+
     const fontScale = d3
         .scaleLinear()
         .domain([minCount, maxCount])
-        .range([props.minFontSize, props.maxFontSize]);
+        .range([responsiveMinFontSize, responsiveMaxFontSize]);
 
     return props.tags.map((tag) => ({
         text: tag.text,
@@ -100,11 +114,17 @@ const drawCloud = () => {
     loading.value = true;
 
     // Clear previous cloud
-    d3.select(cloudContainer.value).selectAll("svg").remove();
+    d3.select(cloudContainer.value).selectAll("*").remove();
 
     const container = cloudContainer.value;
-    const width = container.clientWidth;
-    const height = props.height;
+    const width = container.clientWidth || container.offsetWidth;
+    const height = Math.min(props.height, window.innerHeight * 0.4);
+
+    // Don't draw if container is too small
+    if (width < 100 || height < 100) {
+        loading.value = false;
+        return;
+    }
 
     const processedTags = processTagData();
 
@@ -165,7 +185,8 @@ const drawCloud = () => {
             .enter()
             .append("text")
             .style("font-size", (d) => `${d.size}px`)
-            .style("font-family", "Impact, Arial Black, sans-serif")
+            .style("font-family", "system-ui, -apple-system, sans-serif")
+            .style("font-weight", "bold")
             .style("fill", (d, i) => colorScale(i))
             .style("cursor", props.clickable ? "pointer" : "default")
             .attr("text-anchor", "middle")
@@ -252,7 +273,8 @@ const drawCloud = () => {
         .words(processedTags)
         .padding(props.padding)
         .rotate((d) => rotationScale(d.text))
-        .font("Impact")
+        .font("system-ui")
+        .fontWeight("bold")
         .fontSize((d) => d.size)
         .spiral(props.spiral)
         .on("end", draw);
@@ -273,26 +295,21 @@ const addHoverAnimation = () => {
     document.head.appendChild(style);
 };
 
-onMounted(() => {
-    addHoverAnimation();
-    drawCloud();
+// Use resize composable
+useD3Resize(cloudContainer, drawCloud, 200);
 
-    // Set up resize observer
-    resizeObserver = new ResizeObserver(() => {
-        drawCloud();
-    });
+// Add hover animation styles once
+const addHoverAnimationOnce = (() => {
+    let added = false;
+    return () => {
+        if (!added) {
+            addHoverAnimation();
+            added = true;
+        }
+    };
+})();
 
-    if (cloudContainer.value) {
-        resizeObserver.observe(cloudContainer.value);
-    }
-});
-
-onUnmounted(() => {
-    if (resizeObserver && cloudContainer.value) {
-        resizeObserver.unobserve(cloudContainer.value);
-        resizeObserver.disconnect();
-    }
-});
+addHoverAnimationOnce();
 
 // Redraw when tags change
 watch(

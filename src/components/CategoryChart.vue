@@ -7,8 +7,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import * as d3 from "d3";
+import { useD3Resize } from "../composables/useD3Resize";
 
 const props = defineProps({
     data: {
@@ -57,7 +58,11 @@ const props = defineProps({
 const emit = defineEmits(["category-click"]);
 
 const chartContainer = ref(null);
-let resizeObserver = null;
+
+// Check if dark theme is active
+const isDarkTheme = computed(() => {
+    return document.documentElement.classList.contains("dark-theme");
+});
 
 const drawChart = () => {
     if (!chartContainer.value) return;
@@ -66,8 +71,14 @@ const drawChart = () => {
     d3.select(chartContainer.value).selectAll("*").remove();
 
     const container = chartContainer.value;
-    const width = container.clientWidth;
-    const height = props.height;
+    const width = container.clientWidth || container.offsetWidth;
+    const height = Math.min(props.height, window.innerHeight * 0.5);
+
+    // Don't draw if container is too small
+    if (width < 100 || height < 100) {
+        return;
+    }
+
     const radius = Math.min(width, height) / 2;
 
     if (!props.data || props.data.length === 0) {
@@ -77,7 +88,7 @@ const drawChart = () => {
             .attr("class", "no-data-message")
             .style("text-align", "center")
             .style("padding-top", `${height / 2 - 20}px`)
-            .style("color", "#6b7280")
+            .style("color", "var(--text-color-secondary, #6b7280)")
             .text("No data available");
         return;
     }
@@ -139,7 +150,10 @@ const drawChart = () => {
     arcs.append("path")
         .attr("d", arc)
         .attr("fill", (d) => color(d.data.category))
-        .attr("stroke", "white")
+        .attr(
+            "stroke",
+            isDarkTheme.value ? "var(--surface-ground, #121212)" : "white"
+        )
         .attr("stroke-width", 2)
         .style("cursor", props.clickable ? "pointer" : "default")
         .style("opacity", 0)
@@ -223,7 +237,7 @@ const drawChart = () => {
             .attr("transform", (d) => `translate(${labelArc.centroid(d)})`)
             .attr("text-anchor", "middle")
             .style("font-size", "12px")
-            .style("fill", "#374151")
+            .style("fill", "var(--text-color-secondary, #374151)")
             .style("opacity", 0)
             .text((d) =>
                 d.data.count > 0 ? `${d.data.category} (${d.data.count})` : ""
@@ -252,7 +266,7 @@ const drawChart = () => {
             .attr("dy", "-0.5em")
             .style("font-size", "24px")
             .style("font-weight", "bold")
-            .style("fill", "#1f2937")
+            .style("fill", "var(--text-color, #1f2937)")
             .text(centerData.value);
 
         centerGroup
@@ -260,32 +274,15 @@ const drawChart = () => {
             .attr("text-anchor", "middle")
             .attr("dy", "1em")
             .style("font-size", "14px")
-            .style("fill", "#6b7280")
+            .style("fill", "var(--text-color-secondary, #6b7280)")
             .text(centerData.label);
 
         centerGroup.transition().delay(1000).duration(300).style("opacity", 1);
     }
 };
 
-onMounted(() => {
-    drawChart();
-
-    // Set up resize observer
-    resizeObserver = new ResizeObserver(() => {
-        drawChart();
-    });
-
-    if (chartContainer.value) {
-        resizeObserver.observe(chartContainer.value);
-    }
-});
-
-onUnmounted(() => {
-    if (resizeObserver && chartContainer.value) {
-        resizeObserver.unobserve(chartContainer.value);
-        resizeObserver.disconnect();
-    }
-});
+// Use resize composable
+useD3Resize(chartContainer, drawChart, 150);
 
 // Redraw when data changes
 watch(
