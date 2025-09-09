@@ -7,8 +7,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import * as d3 from "d3";
+import { useD3Resize } from "../composables/useD3Resize";
 
 const props = defineProps({
     data: {
@@ -50,7 +51,36 @@ const emit = defineEmits(["date-click"]);
 
 const heatmapContainer = ref(null);
 const loading = ref(false);
-let resizeObserver = null;
+
+// Check if dark theme is active
+const isDarkTheme = computed(() => {
+    return document.documentElement.classList.contains("dark-theme");
+});
+
+// Get appropriate color scheme based on theme
+const getColorScheme = () => {
+    if (isDarkTheme.value) {
+        // Use brighter color schemes for dark theme
+        const darkSchemes = {
+            greens: d3.interpolateTurbo,
+            blues: d3.interpolateCool,
+            purples: d3.interpolatePlasma,
+            oranges: d3.interpolateWarm,
+            reds: d3.interpolateInferno,
+        };
+        return darkSchemes[props.colorScheme] || darkSchemes.greens;
+    } else {
+        // Original color schemes for light theme
+        const lightSchemes = {
+            greens: d3.interpolateGreens,
+            blues: d3.interpolateBlues,
+            purples: d3.interpolatePurples,
+            oranges: d3.interpolateOranges,
+            reds: d3.interpolateReds,
+        };
+        return lightSchemes[props.colorScheme] || lightSchemes.greens;
+    }
+};
 
 const drawHeatmap = () => {
     if (!heatmapContainer.value) return;
@@ -61,14 +91,26 @@ const drawHeatmap = () => {
     d3.select(heatmapContainer.value).selectAll("*").remove();
 
     const container = heatmapContainer.value;
-    const containerWidth = container.clientWidth;
+    const containerWidth = container.clientWidth || container.offsetWidth;
 
-    // Calculate dimensions
-    const cellSize = props.cellSize;
-    const cellPadding = props.cellPadding;
+    // Don't draw if container is too small
+    if (containerWidth < 50) {
+        loading.value = false;
+        return;
+    }
+
+    // Calculate dimensions - responsive for mobile
+    const isMobile = containerWidth < 600;
+    const isTablet = containerWidth < 900;
+    const cellSize = isMobile
+        ? Math.max(8, Math.floor(containerWidth / 60))
+        : isTablet
+          ? Math.min(12, props.cellSize)
+          : props.cellSize;
+    const cellPadding = isMobile ? 1 : props.cellPadding;
     const yearHeight = cellSize * 7 + cellPadding * 6;
     const monthLabelHeight = props.showMonthLabels ? 20 : 0;
-    const dayLabelWidth = props.showDayLabels ? 30 : 0;
+    const dayLabelWidth = props.showDayLabels && !isMobile ? 30 : 0;
     const legendHeight = 40;
 
     // Get the first Sunday before or on the start date (using UTC)
@@ -102,19 +144,11 @@ const drawHeatmap = () => {
     // Get max count for color scale
     const maxCount = d3.max(props.data, (d) => d.count) || 1;
 
-    // Color scales based on scheme
-    const colorSchemes = {
-        greens: d3.interpolateGreens,
-        blues: d3.interpolateBlues,
-        purples: d3.interpolatePurples,
-        oranges: d3.interpolateOranges,
-        reds: d3.interpolateReds,
-    };
-
+    // Use theme-aware color scheme
     const colorScale = d3
         .scaleSequential()
         .domain([0, maxCount])
-        .interpolator(colorSchemes[props.colorScheme] || colorSchemes.greens);
+        .interpolator(getColorScheme());
 
     // Create SVG
     const svg = d3
@@ -163,7 +197,7 @@ const drawHeatmap = () => {
             .attr("text-anchor", "end")
             .attr("alignment-baseline", "middle")
             .style("font-size", "10px")
-            .style("fill", "#6b7280")
+            .style("fill", "var(--text-color-secondary, #6b7280)")
             .text((d) => days[d]);
     }
 
@@ -184,7 +218,7 @@ const drawHeatmap = () => {
             })
             .attr("y", monthLabelHeight - 5)
             .style("font-size", "11px")
-            .style("fill", "#374151")
+            .style("fill", "var(--text-color-secondary, #374151)")
             .text((d) => d3.utcFormat("%b")(d));
     }
 
@@ -213,9 +247,11 @@ const drawHeatmap = () => {
         .style("fill", (d) => {
             const dateStr = d3.utcFormat("%Y-%m-%d")(d);
             const count = dataMap.get(dateStr) || 0;
-            return count === 0 ? "#e5e7eb" : colorScale(count);
+            return count === 0
+                ? "var(--surface-border, #e5e7eb)"
+                : colorScale(count);
         })
-        .style("stroke", "#fff")
+        .style("stroke", "var(--surface-ground, #fff)")
         .style("stroke-width", 1)
         .style("cursor", props.clickable ? "pointer" : "default")
         .style("opacity", 0)
@@ -231,7 +267,7 @@ const drawHeatmap = () => {
             d3.select(this)
                 .transition()
                 .duration(100)
-                .style("stroke", "#374151")
+                .style("stroke", "var(--primary-color, #374151)")
                 .style("stroke-width", 2);
 
             tooltip.transition().duration(200).style("opacity", 1);
@@ -262,7 +298,7 @@ const drawHeatmap = () => {
             d3.select(this)
                 .transition()
                 .duration(100)
-                .style("stroke", "#fff")
+                .style("stroke", "var(--surface-ground, #fff)")
                 .style("stroke-width", 1);
 
             tooltip.transition().duration(200).style("opacity", 0);
@@ -304,7 +340,7 @@ const drawHeatmap = () => {
         .attr("x", 0)
         .attr("y", 0)
         .style("font-size", "11px")
-        .style("fill", "#6b7280")
+        .style("fill", "var(--text-color-secondary, #6b7280)")
         .text("Less");
 
     // Legend cells
@@ -325,9 +361,11 @@ const drawHeatmap = () => {
         .attr("rx", 2)
         .attr("ry", 2)
         .style("fill", (d) =>
-            d === 0 ? "#e5e7eb" : colorScale(legendScale(d))
+            d === 0
+                ? "var(--surface-border, #e5e7eb)"
+                : colorScale(legendScale(d))
         )
-        .style("stroke", "#fff")
+        .style("stroke", "var(--surface-ground, #fff)")
         .style("stroke-width", 1);
 
     legendGroup
@@ -335,31 +373,14 @@ const drawHeatmap = () => {
         .attr("x", 30 + 5 * (cellSize + cellPadding))
         .attr("y", 0)
         .style("font-size", "11px")
-        .style("fill", "#6b7280")
+        .style("fill", "var(--text-color-secondary, #6b7280)")
         .text("More");
 
     loading.value = false;
 };
 
-onMounted(() => {
-    drawHeatmap();
-
-    // Set up resize observer
-    resizeObserver = new ResizeObserver(() => {
-        drawHeatmap();
-    });
-
-    if (heatmapContainer.value) {
-        resizeObserver.observe(heatmapContainer.value);
-    }
-});
-
-onUnmounted(() => {
-    if (resizeObserver && heatmapContainer.value) {
-        resizeObserver.unobserve(heatmapContainer.value);
-        resizeObserver.disconnect();
-    }
-});
+// Use resize composable with longer debounce for complex heatmap
+useD3Resize(heatmapContainer, drawHeatmap, 250);
 
 // Redraw when data changes
 watch(
