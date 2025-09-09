@@ -9,9 +9,11 @@ import router from "./router";
 
 import "primeflex/primeflex.css";
 import "primeicons/primeicons.css";
+// Initial theme - will be replaced dynamically by useTheme composable
 import "primevue/resources/themes/saga-blue/theme.css";
 import "primevue/resources/primevue.min.css";
 import "./styles/animations.css";
+import "./styles/theme.css";
 
 createApp(App)
     .use(createPinia())

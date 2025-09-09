@@ -7,8 +7,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { ref, watch } from "vue";
 import * as d3 from "d3";
+import { useD3Resize } from "../composables/useD3Resize";
 
 const props = defineProps({
     data: {
@@ -43,7 +44,6 @@ const props = defineProps({
 });
 
 const chartContainer = ref(null);
-let resizeObserver = null;
 
 const drawChart = () => {
     if (!chartContainer.value) return;
@@ -52,9 +52,19 @@ const drawChart = () => {
     d3.select(chartContainer.value).selectAll("*").remove();
 
     const container = chartContainer.value;
-    const width = container.clientWidth;
-    const height = props.height;
-    const margin = props.margin;
+    const width = container.clientWidth || container.offsetWidth;
+    const height = Math.min(props.height, window.innerHeight * 0.5);
+
+    // Don't draw if container is too small
+    if (width < 100 || height < 100) {
+        return;
+    }
+
+    // Responsive margins
+    const isMobile = width < 600;
+    const margin = isMobile
+        ? { top: 10, right: 20, bottom: 30, left: 40 }
+        : props.margin;
 
     // Generate sample data if none provided
     let chartData = props.data;
@@ -224,25 +234,8 @@ const drawChart = () => {
         .style("opacity", 0.3);
 };
 
-onMounted(() => {
-    drawChart();
-
-    // Set up resize observer
-    resizeObserver = new ResizeObserver(() => {
-        drawChart();
-    });
-
-    if (chartContainer.value) {
-        resizeObserver.observe(chartContainer.value);
-    }
-});
-
-onUnmounted(() => {
-    if (resizeObserver && chartContainer.value) {
-        resizeObserver.unobserve(chartContainer.value);
-        resizeObserver.disconnect();
-    }
-});
+// Use resize composable
+useD3Resize(chartContainer, drawChart, 150);
 
 // Redraw when props change
 watch(
