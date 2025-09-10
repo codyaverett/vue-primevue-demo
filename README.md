@@ -43,8 +43,8 @@ Focus on **great UX**, **clean code**, and component composition. No ordering fl
 ## Getting Started
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 ## Submission
