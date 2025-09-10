@@ -63,33 +63,86 @@
                 </div>
             </div>
 
-            <div class="grid mb-3 justify-content-center">
-                <!-- Category Distribution -->
-                <div class="col-12 md:col-6 lg:col-5">
-                    <Card class="h-full flex-1">
-                        <template #title> Category Distribution </template>
-                        <template #content>
-                            <CategoryChart
-                                :data="categoryData"
-                                :height="300"
-                                @category-click="handleCategoryClick"
-                            />
-                        </template>
-                    </Card>
-                </div>
-
-                <!-- Daily Idea Activity - Full Width Below Metrics -->
-                <div class="col-12 md:col-6 lg:col-7">
-                    <div class="col-6">
-                        <Card class="compact-card">
+            <!-- D3 Visualizations Mosaic Grid -->
+            <div class="d3-mosaic-container mb-4">
+                <div class="mosaic-grid">
+                    <!-- Trend Chart - Large tile spanning 2 columns -->
+                    <div class="mosaic-tile mosaic-tile-wide">
+                        <Card class="h-full">
                             <template #title>
                                 <div
                                     class="flex align-items-center justify-content-between"
                                 >
-                                    <span class="text-base"
-                                        >Daily Idea Activity</span
+                                    <span>Ideas Trend</span>
+                                    <SelectButton
+                                        v-model="chartTimeRange"
+                                        :options="timeRangeOptions"
+                                        option-label="label"
+                                        option-value="value"
+                                        class="text-sm"
+                                    />
+                                </div>
+                            </template>
+                            <template #content>
+                                <TrendChart
+                                    ref="trendChartRef"
+                                    :time-range="chartTimeRange"
+                                    :height="chartHeight"
+                                />
+                            </template>
+                        </Card>
+                    </div>
+
+                    <!-- Category Distribution - Square tile -->
+                    <div class="mosaic-tile">
+                        <Card class="h-full">
+                            <template #title> Category Distribution </template>
+                            <template #content>
+                                <CategoryChart
+                                    ref="categoryChartRef"
+                                    :data="categoryData"
+                                    :height="chartHeight"
+                                    @category-click="handleCategoryClick"
+                                />
+                            </template>
+                        </Card>
+                    </div>
+
+                    <!-- Tag Cloud - Half width on large screens -->
+                    <div class="mosaic-tile mosaic-tile-tags">
+                        <Card class="h-full">
+                            <template #title>
+                                <div
+                                    class="flex flex-column sm:flex-row align-items-start sm:align-items-center justify-content-between gap-2"
+                                >
+                                    <span>Popular Tags</span>
+                                    <span class="text-sm text-500"
+                                        >Click a tag to filter ideas</span
                                     >
-                                    <span class="text-xs text-500">{{
+                                </div>
+                            </template>
+                            <template #content>
+                                <div class="tag-cloud-wrapper">
+                                    <TagCloud
+                                        ref="tagCloudRef"
+                                        :tags="tagCloudData"
+                                        :height="chartHeight"
+                                        @tag-click="handleTagClick"
+                                    />
+                                </div>
+                            </template>
+                        </Card>
+                    </div>
+
+                    <!-- Calendar Heatmap - Half width on large screens -->
+                    <div class="mosaic-tile mosaic-tile-calendar">
+                        <Card class="compact-card calendar-card">
+                            <template #title>
+                                <div
+                                    class="flex align-items-center justify-content-between"
+                                >
+                                    <span>Daily Idea Activity</span>
+                                    <span class="text-sm text-500">{{
                                         currentYear
                                     }}</span>
                                 </div>
@@ -97,73 +150,18 @@
                             <template #content>
                                 <div class="calendar-wrapper-compact">
                                     <CalendarHeatmap
+                                        ref="calendarHeatmapRef"
                                         :data="activityData"
                                         :year="currentYear"
                                         color-scheme="greens"
-                                        :cell-size="10"
-                                        :show-day-labels="false"
+                                        :cell-size="11"
+                                        :show-day-labels="true"
                                         @date-click="handleDateClick"
                                     />
                                 </div>
                             </template>
                         </Card>
                     </div>
-                </div>
-            </div>
-
-            <!-- Data Visualizations -->
-            <div class="grid mb-4">
-                <!-- Trend Chart -->
-                <div class="col-12 lg:col-8 flex">
-                    <Card class="h-full flex-1">
-                        <template #title>
-                            <div
-                                class="flex align-items-center justify-content-between"
-                            >
-                                <span>Ideas Trend</span>
-                                <SelectButton
-                                    v-model="chartTimeRange"
-                                    :options="timeRangeOptions"
-                                    option-label="label"
-                                    option-value="value"
-                                    class="text-sm"
-                                />
-                            </div>
-                        </template>
-                        <template #content>
-                            <TrendChart
-                                :time-range="chartTimeRange"
-                                :height="300"
-                            />
-                        </template>
-                    </Card>
-                </div>
-            </div>
-
-            <!-- Popular Tags -->
-            <div class="grid mb-4">
-                <div class="col-12">
-                    <Card>
-                        <template #title>
-                            <div
-                                class="flex flex-column sm:flex-row align-items-start sm:align-items-center justify-content-between gap-2"
-                            >
-                                <span>Popular Tags</span>
-                                <span class="text-sm text-500"
-                                    >Click a tag to filter ideas</span
-                                >
-                            </div>
-                        </template>
-                        <template #content>
-                            <div class="tag-cloud-wrapper">
-                                <TagCloud
-                                    :tags="tagCloudData"
-                                    :height="300"
-                                    @tag-click="handleTagClick"
-                                />
-                            </div>
-                        </template>
-                    </Card>
                 </div>
             </div>
 
@@ -195,7 +193,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { useIdeasStore } from "../stores/ideas";
 import { resetToSeed } from "../services/api";
@@ -217,9 +215,23 @@ import SelectButton from "primevue/selectbutton";
 const router = useRouter();
 const store = useIdeasStore();
 
+// Chart component refs
+const trendChartRef = ref(null);
+const categoryChartRef = ref(null);
+const tagCloudRef = ref(null);
+const calendarHeatmapRef = ref(null);
+
 // Chart controls
 const chartTimeRange = ref("7d");
 const currentYear = ref(new Date().getFullYear());
+
+// Responsive chart height
+const chartHeight = computed(() => {
+    const width = window.innerWidth;
+    if (width < 768) return 200;
+    if (width < 1400) return 250;
+    return 300;
+});
 
 const timeRangeOptions = [
     { label: "7 Days", value: "7d" },
@@ -399,11 +411,58 @@ const handleStatusClick = (status) => {
     });
 };
 
+// Trigger resize for all D3 charts
+const triggerChartsResize = () => {
+    nextTick(() => {
+        if (trendChartRef.value?.redraw) {
+            trendChartRef.value.redraw();
+        }
+        if (categoryChartRef.value?.redraw) {
+            categoryChartRef.value.redraw();
+        }
+        if (tagCloudRef.value?.redraw) {
+            tagCloudRef.value.redraw();
+        }
+        if (calendarHeatmapRef.value?.redraw) {
+            calendarHeatmapRef.value.redraw();
+        }
+    });
+};
+
+// Handle window resize with debounce
+let resizeTimeout = null;
+const handleWindowResize = () => {
+    if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+    }
+    resizeTimeout = setTimeout(() => {
+        triggerChartsResize();
+    }, 250);
+};
+
 // Lifecycle
 onMounted(async () => {
     console.log("Dashboard mounted, loading data...");
     await store.refresh();
     console.log("Loaded", store.items.length, "ideas");
+
+    // Add window resize listener
+    window.addEventListener("resize", handleWindowResize);
+
+    // Trigger initial resize after data load
+    nextTick(() => {
+        triggerChartsResize();
+    });
+});
+
+onUnmounted(() => {
+    // Remove window resize listener
+    window.removeEventListener("resize", handleWindowResize);
+
+    // Clear any pending resize timeout
+    if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+    }
 });
 </script>
 
@@ -460,20 +519,209 @@ onMounted(async () => {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+/* D3 Mosaic Grid Layout */
+.d3-mosaic-container {
+    width: 100%;
+    padding: 0.5rem;
+    box-sizing: border-box;
+}
+
+.mosaic-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: auto; /* Let rows size based on content */
+    gap: 1rem;
+    width: 100%;
+    container-type: inline-size;
+}
+
+.mosaic-tile {
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    container-type: inline-size;
+}
+
+.mosaic-tile-wide {
+    grid-column: span 2;
+}
+
+.mosaic-tile-tags {
+    grid-column: span 2;
+}
+
+/* Large screens: 4-column grid */
+@media (min-width: 1600px) {
+    .mosaic-tile-calendar {
+        grid-column: span 2;
+    }
+}
+
+/* Medium-large screens: 3-column grid */
+@media (max-width: 1599px) {
+    .mosaic-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .mosaic-tile-tags {
+        grid-column: span 2;
+    }
+
+    .mosaic-tile-calendar {
+        grid-column: span 3;
+    }
+}
+
+.mosaic-tile :deep(.p-card) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.mosaic-tile :deep(.p-card-body) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    padding: 1rem;
+}
+
+.mosaic-tile :deep(.p-card-content) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* D3 containers should be responsive to their parent */
+.mosaic-tile :deep(.trend-chart-container),
+.mosaic-tile :deep(.category-chart-container),
+.mosaic-tile :deep(.tag-cloud-container) {
+    width: 100%;
+    height: auto;
+    min-height: 200px;
+    max-height: 400px;
+}
+
+/* Calendar has different height requirements */
+.mosaic-tile-calendar {
+    min-height: 180px;
+}
+
+.mosaic-tile-calendar :deep(.calendar-heatmap-container) {
+    width: 100%;
+    height: auto;
+    min-height: 150px;
+    max-height: 200px;
+}
+
+.calendar-card :deep(.p-card-body) {
+    padding: 0.75rem;
+}
+
+.calendar-card :deep(.p-card-content) {
+    padding: 0.5rem 0;
+}
+
+/* Responsive mosaic layout */
+@media (max-width: 1400px) {
+    .mosaic-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mosaic-tile-wide {
+        grid-column: span 2;
+    }
+
+    .mosaic-tile-tags {
+        grid-column: span 2;
+    }
+
+    .mosaic-tile-calendar {
+        grid-column: span 2;
+    }
+
+    .mosaic-tile :deep(.trend-chart-container),
+    .mosaic-tile :deep(.category-chart-container),
+    .mosaic-tile :deep(.tag-cloud-container),
+    .mosaic-tile :deep(.calendar-heatmap-container) {
+        max-height: 350px;
+    }
+}
+
+@media (max-width: 768px) {
+    .d3-mosaic-container {
+        padding: 0.25rem;
+    }
+
+    .mosaic-grid {
+        grid-template-columns: 1fr;
+        grid-auto-rows: auto;
+        gap: 0.75rem;
+    }
+
+    .mosaic-tile {
+        min-height: 200px;
+    }
+
+    .mosaic-tile,
+    .mosaic-tile-wide,
+    .mosaic-tile-tags,
+    .mosaic-tile-calendar {
+        grid-column: span 1;
+    }
+
+    .mosaic-tile :deep(.p-card-body) {
+        padding: 0.75rem;
+    }
+
+    .mosaic-tile :deep(.trend-chart-container),
+    .mosaic-tile :deep(.category-chart-container),
+    .mosaic-tile :deep(.tag-cloud-container) {
+        min-height: 180px;
+        max-height: 300px;
+    }
+
+    .mosaic-tile-calendar {
+        min-height: 160px;
+    }
+
+    .mosaic-tile-calendar :deep(.calendar-heatmap-container) {
+        min-height: 140px;
+        max-height: 180px;
+    }
+}
+
 /* Prevent overflow in tag cloud and calendar containers */
 .tag-cloud-wrapper,
 .calendar-wrapper {
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.tag-cloud-wrapper {
+    padding: 0 10px;
+}
+
+.calendar-wrapper-compact {
+    width: 100%;
+    overflow-x: auto;
     overflow-y: hidden;
+    max-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Ensure proper spacing on smaller screens */
 @media (max-width: 1200px) {
     .tag-cloud-wrapper,
     .calendar-wrapper {
-        min-height: 300px;
+        min-height: 250px;
     }
 }
 

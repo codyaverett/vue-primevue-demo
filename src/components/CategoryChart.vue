@@ -71,7 +71,8 @@ const drawChart = () => {
     d3.select(chartContainer.value).selectAll("*").remove();
 
     const container = chartContainer.value;
-    const width = container.clientWidth || container.offsetWidth;
+    const containerWidth = container.clientWidth || container.offsetWidth;
+    const width = Math.min(containerWidth, window.innerWidth - 40); // Account for padding
     const height = Math.min(props.height, window.innerHeight * 0.5);
 
     // Don't draw if container is too small
@@ -79,7 +80,13 @@ const drawChart = () => {
         return;
     }
 
-    const radius = Math.min(width, height) / 2;
+    // Responsive sizing for mobile
+    const isMobile = width < 400;
+    const padding = isMobile ? 10 : 20;
+    const effectiveWidth = width - padding * 2;
+    const effectiveHeight = height - padding * 2;
+
+    const radius = Math.min(effectiveWidth, effectiveHeight) / 2;
 
     if (!props.data || props.data.length === 0) {
         // Show "No Data" message
@@ -231,17 +238,33 @@ const drawChart = () => {
             emit("category-click", d.data);
         });
 
-    // Labels
-    if (props.showLabels) {
+    // Labels - hide on very small screens
+    if (props.showLabels && !isMobile) {
+        const darkMode =
+            document.documentElement.classList.contains("dark-theme");
         arcs.append("text")
             .attr("transform", (d) => `translate(${labelArc.centroid(d)})`)
             .attr("text-anchor", "middle")
-            .style("font-size", "12px")
-            .style("fill", "var(--text-color-secondary, #374151)")
-            .style("opacity", 0)
-            .text((d) =>
-                d.data.count > 0 ? `${d.data.category} (${d.data.count})` : ""
+            .style("font-size", "14px")
+            .style("font-weight", "600")
+            .style("fill", darkMode ? "#e5e7eb" : "#1f2937")
+            .style(
+                "text-shadow",
+                darkMode
+                    ? "0 1px 2px rgba(0, 0, 0, 0.8)"
+                    : "0 1px 2px rgba(255, 255, 255, 0.8)"
             )
+            .style("opacity", 0)
+            .text((d) => {
+                if (d.data.count === 0) return "";
+                // Shorter labels on mobile
+                const label = isMobile
+                    ? d.data.category
+                    : `${d.data.category} (${d.data.count})`;
+                return label.length > 15
+                    ? label.substring(0, 12) + "..."
+                    : label;
+            })
             .transition()
             .delay(800)
             .duration(300)
