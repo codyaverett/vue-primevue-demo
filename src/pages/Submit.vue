@@ -7,191 +7,315 @@
         @submit="onSubmit"
     >
         {{ watchFormValues(values) }}
-        <div class="surface-card p-3 border-round shadow-1">
-            <a
-                href="#form-actions"
-                class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 bg-primary text-white p-2 border-round"
-                >Skip to form actions</a
-            >
-            <h2 id="form-title" class="mt-0">Submit Idea</h2>
-            <p class="text-600">
-                Complete the form below to submit your idea. All fields marked
-                with * are required.
-            </p>
 
-            <!-- Validation Summary -->
-            <Message
-                v-if="showValidationSummary && Object.keys(formErrors).length"
-                severity="error"
-                :closable="false"
-                class="mb-3"
+        <!-- Progress Tracker -->
+        <div ref="progressWrapperRef" class="progress-wrapper">
+            <div
+                ref="progressTrackerRef"
+                class="progress-container"
+                :class="{ 'is-sticky': isProgressSticky }"
             >
-                <ul class="m-0 pl-3">
-                    <li v-for="error in formErrors" :key="error">
-                        {{ error }}
-                    </li>
-                </ul>
-            </Message>
+                <ProgressBar :value="formProgress" :show-value="false" />
+                <div
+                    class="progress-info flex justify-content-between align-items-center mt-2 gap-3"
+                >
+                    <div class="text-sm white-space-nowrap">
+                        <span class="font-semibold text-primary"
+                            >{{ formProgress }}%</span
+                        >
+                        <span class="text-600 ml-1 hidden sm:inline"
+                            >Complete</span
+                        >
+                    </div>
+                    <div
+                        class="flex gap-1 flex-wrap justify-content-center flex-grow-1"
+                    >
+                        <Tag
+                            v-for="section in sectionProgress"
+                            :key="section.name"
+                            :severity="
+                                section.complete ? 'success' : 'secondary'
+                            "
+                            :icon="section.complete ? 'pi pi-check' : null"
+                            :style="
+                                !section.complete
+                                    ? {
+                                          borderColor: section.color,
+                                          color: section.color,
+                                      }
+                                    : {}
+                            "
+                            class="text-xs cursor-pointer section-tag"
+                            @click="scrollToSection(section.id)"
+                        >
+                            {{ section.name }}
+                        </Tag>
+                    </div>
+                    <div class="text-sm text-600 white-space-nowrap">
+                        <span class="hidden sm:inline"
+                            >{{ filledFields }} of {{ totalFields }} required
+                            fields</span
+                        >
+                        <span class="inline sm:hidden"
+                            >{{ filledFields }}/{{ totalFields }}</span
+                        >
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <!-- Success Message -->
-            <Message
-                v-if="submitSuccess"
-                severity="success"
-                :closable="true"
-                class="mb-3"
-                @close="submitSuccess = false"
-            >
-                Your idea has been successfully submitted!
-            </Message>
+        <!-- Main Form Content -->
+        <div class="form-content">
+            <div class="surface-card p-3 border-round shadow-1">
+                <a
+                    href="#form-actions"
+                    class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 bg-primary text-white p-2 border-round"
+                    >Skip to form actions</a
+                >
+                <h2 id="form-title" class="mt-0">Submit Idea</h2>
+                <p class="text-600">
+                    Complete the form below to submit your idea. All fields
+                    marked with * are required.
+                </p>
 
-            <div class="grid">
-                <!-- Idea Basics Section -->
-                <div class="col-12">
-                    <Panel header="Idea Basics">
-                        <div class="grid">
-                            <div class="col-12 lg:col-6">
-                                <Field
-                                    v-slot="{
-                                        field,
-                                        errorMessage,
-                                        meta: fieldMeta,
-                                    }"
-                                    name="title"
-                                    :rules="validationRules.title"
-                                >
-                                    <label class="block mb-2" for="title"
-                                        >Title
-                                        <span
-                                            class="text-red-500"
-                                            aria-label="required"
-                                            >*</span
-                                        >
-                                        <i
-                                            v-tooltip.right="fieldHelp.title"
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <InputText
-                                        id="title"
-                                        v-bind="field"
-                                        :class="{
-                                            'p-invalid':
-                                                errorMessage &&
-                                                fieldMeta.touched,
+                <!-- Validation Summary -->
+                <Message
+                    v-if="
+                        showValidationSummary && Object.keys(formErrors).length
+                    "
+                    severity="error"
+                    :closable="false"
+                    class="mb-3"
+                >
+                    <ul class="m-0 pl-3">
+                        <li v-for="error in formErrors" :key="error">
+                            {{ error }}
+                        </li>
+                    </ul>
+                </Message>
+
+                <!-- Success Message removed to avoid duplication with toast -->
+
+                <div class="grid">
+                    <!-- Idea Basics Section -->
+                    <div id="section-basics" class="col-12 section-panel">
+                        <Panel
+                            header="Idea Basics"
+                            class="section-basics-panel"
+                        >
+                            <div class="grid">
+                                <div class="col-12 lg:col-6">
+                                    <Field
+                                        v-slot="{
+                                            field,
+                                            errorMessage,
+                                            meta: fieldMeta,
                                         }"
-                                        class="w-full"
-                                        placeholder="Enter a descriptive title"
-                                        aria-describedby="title-help"
-                                        aria-required="true"
-                                        aria-invalid="!!errorMessage && fieldMeta.touched"
-                                    />
-                                    <small
-                                        id="title-help"
-                                        class="text-600 block mt-1"
-                                        >Choose a clear, concise title (3-100
-                                        characters)</small
+                                        name="title"
+                                        :rules="validationRules.title"
                                     >
-                                    <small
-                                        v-if="errorMessage && fieldMeta.touched"
-                                        class="p-error block mt-1"
-                                        role="alert"
-                                    >
-                                        {{ errorMessage }}
-                                    </small>
-                                </Field>
-                            </div>
-                            <div class="col-12 lg:col-6">
-                                <Field
-                                    v-slot="{
-                                        errorMessage,
-                                        meta: fieldMeta,
-                                        value,
-                                        handleChange,
-                                    }"
-                                    name="category"
-                                    :rules="validationRules.category"
-                                >
-                                    <label class="block mb-2" for="category"
-                                        >Category
-                                        <span
-                                            class="text-red-500"
-                                            aria-label="required"
-                                            >*</span
+                                        <label class="block mb-2" for="title"
+                                            >Title
+                                            <span
+                                                class="text-red-500"
+                                                aria-label="required"
+                                                >*</span
+                                            >
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.title
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <InputText
+                                            id="title"
+                                            v-bind="field"
+                                            :class="{
+                                                'p-invalid':
+                                                    errorMessage &&
+                                                    fieldMeta.touched,
+                                            }"
+                                            class="w-full"
+                                            placeholder="Enter a descriptive title"
+                                            aria-describedby="title-help"
+                                            aria-required="true"
+                                            aria-invalid="!!errorMessage && fieldMeta.touched"
+                                        />
+                                        <small
+                                            id="title-help"
+                                            class="text-600 block mt-1"
+                                            >Choose a clear, concise title
+                                            (3-100 characters)</small
                                         >
-                                        <i
-                                            v-tooltip.right="fieldHelp.category"
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <Dropdown
-                                        id="category"
-                                        :model-value="value"
-                                        :options="categories"
-                                        placeholder="Select a category"
-                                        :class="{
-                                            'p-invalid':
+                                        <small
+                                            v-if="
                                                 errorMessage &&
-                                                fieldMeta.touched,
-                                        }"
-                                        class="w-full"
-                                        aria-describedby="category-help"
-                                        aria-required="true"
-                                        aria-invalid="!!errorMessage && fieldMeta.touched"
-                                        @update:model-value="handleChange"
-                                    />
-                                    <small
-                                        id="category-help"
-                                        class="text-600 block mt-1"
-                                        >Select the category that best fits your
-                                        idea</small
-                                    >
-                                    <small
-                                        v-if="errorMessage && fieldMeta.touched"
-                                        class="p-error block mt-1"
-                                        role="alert"
-                                    >
-                                        {{ errorMessage }}
-                                    </small>
-                                </Field>
-                            </div>
-                            <div class="col-12">
-                                <Field
-                                    v-slot="{
-                                        field,
-                                        errorMessage,
-                                        meta: fieldMeta,
-                                    }"
-                                    name="description"
-                                    :rules="validationRules.description"
-                                >
-                                    <label class="block mb-2" for="desc"
-                                        >Description
-                                        <span
-                                            class="text-red-500"
-                                            aria-label="required"
-                                            >*</span
-                                        >
-                                        <i
-                                            v-tooltip.right="
-                                                fieldHelp.description
+                                                fieldMeta.touched
                                             "
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <Textarea
-                                        id="desc"
-                                        v-bind="field"
-                                        rows="4"
-                                        :auto-resize="true"
-                                        :class="{
-                                            'p-invalid':
-                                                errorMessage &&
-                                                fieldMeta.touched,
+                                            class="p-error block mt-1"
+                                            role="alert"
+                                        >
+                                            {{ errorMessage }}
+                                        </small>
+                                    </Field>
+                                </div>
+                                <div class="col-12 lg:col-6">
+                                    <Field
+                                        v-slot="{
+                                            errorMessage,
+                                            meta: fieldMeta,
+                                            value,
+                                            handleChange,
                                         }"
-                                        class="w-full"
-                                        placeholder="Describe your idea in detail (10-500 characters)"
-                                        aria-describedby="desc-help desc-counter"
-                                        aria-required="true"
-                                        aria-invalid="!!errorMessage && fieldMeta.touched"
-                                    />
-                                    <div class="flex justify-content-between">
+                                        name="category"
+                                        :rules="validationRules.category"
+                                    >
+                                        <label class="block mb-2" for="category"
+                                            >Category
+                                            <span
+                                                class="text-red-500"
+                                                aria-label="required"
+                                                >*</span
+                                            >
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.category
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <Dropdown
+                                            id="category"
+                                            :model-value="value"
+                                            :options="categories"
+                                            placeholder="Select a category"
+                                            :class="{
+                                                'p-invalid':
+                                                    errorMessage &&
+                                                    fieldMeta.touched,
+                                            }"
+                                            class="w-full"
+                                            aria-describedby="category-help"
+                                            aria-required="true"
+                                            aria-invalid="!!errorMessage && fieldMeta.touched"
+                                            @update:model-value="handleChange"
+                                        />
+                                        <small
+                                            id="category-help"
+                                            class="text-600 block mt-1"
+                                            >Select the category that best fits
+                                            your idea</small
+                                        >
+                                        <small
+                                            v-if="
+                                                errorMessage &&
+                                                fieldMeta.touched
+                                            "
+                                            class="p-error block mt-1"
+                                            role="alert"
+                                        >
+                                            {{ errorMessage }}
+                                        </small>
+                                    </Field>
+                                </div>
+                                <div class="col-12">
+                                    <Field
+                                        v-slot="{
+                                            field,
+                                            errorMessage,
+                                            meta: fieldMeta,
+                                        }"
+                                        name="description"
+                                        :rules="validationRules.description"
+                                    >
+                                        <label class="block mb-2" for="desc"
+                                            >Description
+                                            <span
+                                                class="text-red-500"
+                                                aria-label="required"
+                                                >*</span
+                                            >
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.description
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <Textarea
+                                            id="desc"
+                                            v-bind="field"
+                                            rows="4"
+                                            :auto-resize="true"
+                                            :class="{
+                                                'p-invalid':
+                                                    errorMessage &&
+                                                    fieldMeta.touched,
+                                            }"
+                                            class="w-full"
+                                            placeholder="Describe your idea in detail (10-500 characters)"
+                                            aria-describedby="desc-help desc-counter"
+                                            aria-required="true"
+                                            aria-invalid="!!errorMessage && fieldMeta.touched"
+                                        />
+                                        <div
+                                            class="flex justify-content-between"
+                                        >
+                                            <small
+                                                v-if="
+                                                    errorMessage &&
+                                                    fieldMeta.touched
+                                                "
+                                                class="p-error block mt-1"
+                                            >
+                                                {{ errorMessage }}
+                                            </small>
+                                            <small
+                                                id="desc-help"
+                                                class="text-600 block mt-1"
+                                                >Provide a detailed explanation
+                                                of your idea</small
+                                            >
+                                            <small
+                                                id="desc-counter"
+                                                class="text-600 mt-1"
+                                                aria-live="polite"
+                                            >
+                                                {{
+                                                    field.value?.length || 0
+                                                }}/500 characters
+                                            </small>
+                                        </div>
+                                    </Field>
+                                </div>
+                                <div class="col-12">
+                                    <Field
+                                        v-slot="{
+                                            errorMessage,
+                                            meta: fieldMeta,
+                                            value,
+                                            handleChange,
+                                        }"
+                                        name="tags"
+                                        :rules="validationRules.tags"
+                                    >
+                                        <label class="block mb-2"
+                                            >Tags
+                                            <span class="text-red-500">*</span>
+                                            <i
+                                                v-tooltip.right="fieldHelp.tags"
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <Chips
+                                            :model-value="value"
+                                            separator=","
+                                            :class="{
+                                                'p-invalid':
+                                                    errorMessage &&
+                                                    fieldMeta.touched,
+                                            }"
+                                            class="w-full"
+                                            placeholder="Add tags and press Enter"
+                                            @update:model-value="handleChange"
+                                        />
                                         <small
                                             v-if="
                                                 errorMessage &&
@@ -201,616 +325,621 @@
                                         >
                                             {{ errorMessage }}
                                         </small>
-                                        <small
-                                            id="desc-help"
-                                            class="text-600 block mt-1"
-                                            >Provide a detailed explanation of
-                                            your idea</small
-                                        >
-                                        <small
-                                            id="desc-counter"
-                                            class="text-600 mt-1"
-                                            aria-live="polite"
-                                        >
-                                            {{ field.value?.length || 0 }}/500
-                                            characters
-                                        </small>
-                                    </div>
-                                </Field>
+                                    </Field>
+                                </div>
                             </div>
-                            <div class="col-12">
-                                <Field
-                                    v-slot="{
-                                        errorMessage,
-                                        meta: fieldMeta,
-                                        value,
-                                        handleChange,
-                                    }"
-                                    name="tags"
-                                    :rules="validationRules.tags"
-                                >
-                                    <label class="block mb-2"
-                                        >Tags
-                                        <span class="text-red-500">*</span>
-                                        <i
-                                            v-tooltip.right="fieldHelp.tags"
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <Chips
-                                        :model-value="value"
-                                        separator=","
-                                        :class="{
-                                            'p-invalid':
-                                                errorMessage &&
-                                                fieldMeta.touched,
-                                        }"
-                                        class="w-full"
-                                        placeholder="Add tags and press Enter"
-                                        @update:model-value="handleChange"
-                                    />
-                                    <small
-                                        v-if="errorMessage && fieldMeta.touched"
-                                        class="p-error block mt-1"
-                                    >
-                                        {{ errorMessage }}
-                                    </small>
-                                </Field>
-                            </div>
-                        </div>
-                    </Panel>
-                </div>
+                        </Panel>
+                    </div>
 
-                <!-- Impact & Priority Section -->
-                <div class="col-12">
-                    <Panel header="Impact & Priority">
-                        <div class="grid">
-                            <div class="col-12 lg:col-6">
-                                <Field
-                                    v-slot="{
-                                        errorMessage,
-                                        meta: fieldMeta,
-                                        value,
-                                        handleChange,
-                                    }"
-                                    name="personas"
-                                    :rules="validationRules.personas"
-                                >
-                                    <label class="block mb-2"
-                                        >Target Personas
-                                        <span class="text-red-500">*</span>
-                                        <i
-                                            v-tooltip.right="fieldHelp.personas"
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <MultiSelect
-                                        :model-value="value"
-                                        :options="personas"
-                                        option-label="label"
-                                        display="chip"
-                                        placeholder="Select target personas"
-                                        :class="{
-                                            'p-invalid':
-                                                errorMessage &&
-                                                fieldMeta.touched,
+                    <!-- Impact & Priority Section -->
+                    <div id="section-impact" class="col-12 section-panel">
+                        <Panel
+                            header="Impact & Priority"
+                            class="section-impact-panel"
+                        >
+                            <div class="grid">
+                                <div class="col-12 lg:col-6">
+                                    <Field
+                                        v-slot="{
+                                            errorMessage,
+                                            meta: fieldMeta,
+                                            value,
+                                            handleChange,
                                         }"
-                                        class="w-full"
-                                        @update:model-value="handleChange"
-                                    />
-                                    <small
-                                        v-if="errorMessage && fieldMeta.touched"
-                                        class="p-error block mt-1"
+                                        name="personas"
+                                        :rules="validationRules.personas"
                                     >
-                                        {{ errorMessage }}
-                                    </small>
-                                </Field>
-                            </div>
-                            <div class="col-12 md:col-6 lg:col-3">
-                                <Field
-                                    v-slot="{
-                                        errorMessage,
-                                        meta: fieldMeta,
-                                        value,
-                                        handleChange,
-                                    }"
-                                    name="impact"
-                                    :rules="validationRules.impact"
-                                >
-                                    <label class="block mb-2"
-                                        >Impact Score
-                                        <span class="text-red-500">*</span>
-                                        <i
-                                            v-tooltip.right="fieldHelp.impact"
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <Slider
-                                        :model-value="value"
-                                        :min="1"
-                                        :max="10"
-                                        :class="{
-                                            'p-invalid':
-                                                errorMessage &&
-                                                fieldMeta.touched,
-                                        }"
-                                        @update:model-value="handleChange"
-                                    />
-                                    <div class="flex justify-content-between">
-                                        <small class="text-600">
-                                            Score: {{ value || 5 }}
-                                        </small>
+                                        <label class="block mb-2"
+                                            >Target Personas
+                                            <span class="text-red-500">*</span>
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.personas
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <MultiSelect
+                                            :model-value="value"
+                                            :options="personas"
+                                            option-label="label"
+                                            display="chip"
+                                            placeholder="Select target personas"
+                                            :class="{
+                                                'p-invalid':
+                                                    errorMessage &&
+                                                    fieldMeta.touched,
+                                            }"
+                                            class="w-full"
+                                            @update:model-value="handleChange"
+                                        />
                                         <small
                                             v-if="
                                                 errorMessage &&
                                                 fieldMeta.touched
                                             "
-                                            class="p-error"
+                                            class="p-error block mt-1"
                                         >
                                             {{ errorMessage }}
                                         </small>
-                                    </div>
-                                </Field>
-                            </div>
-                            <div class="col-12 md:col-6 lg:col-3">
-                                <Field
-                                    v-slot="{
-                                        errorMessage,
-                                        meta: fieldMeta,
-                                        value,
-                                        handleChange,
-                                    }"
-                                    name="reach"
-                                    :rules="validationRules.reach"
-                                >
-                                    <label class="block mb-2"
-                                        >Expected Reach
-                                        <span class="text-red-500">*</span>
-                                        <i
-                                            v-tooltip.right="fieldHelp.reach"
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <InputNumber
-                                        :model-value="value"
-                                        :min="1"
-                                        :step="100"
-                                        mode="decimal"
-                                        placeholder="Number of users"
-                                        :class="{
-                                            'p-invalid':
-                                                errorMessage &&
-                                                fieldMeta.touched,
+                                    </Field>
+                                </div>
+                                <div class="col-12 md:col-6 lg:col-3">
+                                    <Field
+                                        v-slot="{
+                                            errorMessage,
+                                            meta: fieldMeta,
+                                            value,
+                                            handleChange,
                                         }"
-                                        class="w-full"
-                                        @update:model-value="handleChange"
-                                    />
-                                    <small
-                                        v-if="errorMessage && fieldMeta.touched"
-                                        class="p-error block mt-1"
+                                        name="impact"
+                                        :rules="validationRules.impact"
                                     >
-                                        {{ errorMessage }}
-                                    </small>
-                                </Field>
-                            </div>
-                            <div class="col-12 md:col-6 lg:col-3">
-                                <Field
-                                    v-slot="{
-                                        errorMessage,
-                                        meta: fieldMeta,
-                                        value,
-                                        handleChange,
-                                    }"
-                                    name="targetDate"
-                                    :rules="validationRules.targetDate"
-                                >
-                                    <label class="block mb-2"
-                                        >Target Date
-                                        <i
-                                            v-tooltip.right="
-                                                fieldHelp.targetDate
-                                            "
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <Calendar
-                                        :model-value="value"
-                                        :show-icon="true"
-                                        :min-date="new Date()"
-                                        date-format="mm/dd/yy"
-                                        placeholder="Select target date"
-                                        :class="{
-                                            'p-invalid':
-                                                errorMessage &&
-                                                fieldMeta.touched,
-                                        }"
-                                        class="w-full"
-                                        @update:model-value="handleChange"
-                                    />
-                                    <small
-                                        v-if="errorMessage && fieldMeta.touched"
-                                        class="p-error block mt-1"
-                                    >
-                                        {{ errorMessage }}
-                                    </small>
-                                </Field>
-                            </div>
-                        </div>
-                    </Panel>
-                </div>
-
-                <!-- Technical Section -->
-                <div class="col-12">
-                    <Panel header="Technical Details">
-                        <div class="grid">
-                            <div class="col-12 md:col-6 lg:col-4">
-                                <Field
-                                    v-slot="{
-                                        errorMessage,
-                                        meta: fieldMeta,
-                                        value,
-                                        handleChange,
-                                    }"
-                                    name="complexity"
-                                    :rules="validationRules.complexity"
-                                >
-                                    <label class="block mb-2"
-                                        >Complexity
-                                        <span class="text-red-500">*</span>
-                                        <i
-                                            v-tooltip.right="
-                                                fieldHelp.complexity
-                                            "
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <Dropdown
-                                        :model-value="value"
-                                        :options="complexityOptions"
-                                        placeholder="Select complexity"
-                                        :class="{
-                                            'p-invalid':
-                                                errorMessage &&
-                                                fieldMeta.touched,
-                                        }"
-                                        class="w-full"
-                                        @update:model-value="handleChange"
-                                    />
-                                    <small
-                                        v-if="errorMessage && fieldMeta.touched"
-                                        class="p-error block mt-1"
-                                    >
-                                        {{ errorMessage }}
-                                    </small>
-                                </Field>
-                            </div>
-                            <div class="col-12 md:col-6 lg:col-4">
-                                <Field
-                                    v-slot="{ value, handleChange }"
-                                    name="dependencies"
-                                >
-                                    <label class="block mb-2"
-                                        >Dependencies
-                                        <i
-                                            v-tooltip.right="
-                                                fieldHelp.dependencies
-                                            "
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <Chips
-                                        :model-value="value"
-                                        separator=","
-                                        placeholder="Add dependencies"
-                                        class="w-full"
-                                        @update:model-value="handleChange"
-                                    />
-                                </Field>
-                            </div>
-                            <div class="col-12 md:col-6 lg:col-4">
-                                <Field
-                                    v-slot="{
-                                        field,
-                                        errorMessage,
-                                        meta: fieldMeta,
-                                    }"
-                                    name="repoUrl"
-                                    :rules="validationRules.repoUrl"
-                                >
-                                    <label class="block mb-2" for="repo"
-                                        >Repository URL
-                                        <i
-                                            v-tooltip.right="fieldHelp.repoUrl"
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <InputText
-                                        id="repo"
-                                        v-bind="field"
-                                        placeholder="https://github.com/org/repo"
-                                        :class="{
-                                            'p-invalid':
-                                                errorMessage &&
-                                                fieldMeta.touched,
-                                        }"
-                                        class="w-full"
-                                    />
-                                    <small
-                                        v-if="errorMessage && fieldMeta.touched"
-                                        class="p-error block mt-1"
-                                    >
-                                        {{ errorMessage }}
-                                    </small>
-                                </Field>
-                            </div>
-                            <div class="col-12">
-                                <Field
-                                    v-slot="{ value, handleChange }"
-                                    name="privacy"
-                                    :rules="validationRules.privacy"
-                                >
-                                    <label class="block mb-2"
-                                        >Privacy Setting
-                                        <span class="text-red-500">*</span>
-                                        <i
-                                            v-tooltip.right="fieldHelp.privacy"
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <div class="flex gap-3">
-                                        <div
-                                            class="flex align-items-center gap-2"
-                                        >
-                                            <RadioButton
-                                                :model-value="value"
-                                                input-id="privacy1"
-                                                name="privacy"
-                                                value="public"
-                                                @update:model-value="
-                                                    handleChange
-                                                "
-                                            />
-                                            <label for="privacy1">Public</label>
-                                        </div>
-                                        <div
-                                            class="flex align-items-center gap-2"
-                                        >
-                                            <RadioButton
-                                                :model-value="value"
-                                                input-id="privacy2"
-                                                name="privacy"
-                                                value="internal"
-                                                @update:model-value="
-                                                    handleChange
-                                                "
-                                            />
-                                            <label for="privacy2"
-                                                >Internal</label
-                                            >
-                                        </div>
-                                        <div
-                                            class="flex align-items-center gap-2"
-                                        >
-                                            <RadioButton
-                                                :model-value="value"
-                                                input-id="privacy3"
-                                                name="privacy"
-                                                value="private"
-                                                @update:model-value="
-                                                    handleChange
-                                                "
-                                            />
-                                            <label for="privacy3"
-                                                >Private</label
-                                            >
-                                        </div>
-                                    </div>
-                                </Field>
-                            </div>
-                        </div>
-                    </Panel>
-                </div>
-
-                <!-- Contact & Meta Section -->
-                <div class="col-12">
-                    <Panel header="Contact Information">
-                        <div class="grid">
-                            <div class="col-12 md:col-6 lg:col-4">
-                                <Field
-                                    v-slot="{
-                                        field,
-                                        errorMessage,
-                                        meta: fieldMeta,
-                                    }"
-                                    name="requesterName"
-                                    :rules="validationRules.requesterName"
-                                >
-                                    <label class="block mb-2" for="name"
-                                        >Your Name
-                                        <span class="text-red-500">*</span>
-                                        <i
-                                            v-tooltip.right="
-                                                fieldHelp.requesterName
-                                            "
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <InputText
-                                        id="name"
-                                        v-bind="field"
-                                        placeholder="John Doe"
-                                        :class="{
-                                            'p-invalid':
-                                                errorMessage &&
-                                                fieldMeta.touched,
-                                        }"
-                                        class="w-full"
-                                    />
-                                    <small
-                                        v-if="errorMessage && fieldMeta.touched"
-                                        class="p-error block mt-1"
-                                    >
-                                        {{ errorMessage }}
-                                    </small>
-                                </Field>
-                            </div>
-                            <div class="col-12 md:col-6 lg:col-4">
-                                <Field
-                                    v-slot="{
-                                        field,
-                                        errorMessage,
-                                        meta: fieldMeta,
-                                    }"
-                                    name="requesterEmail"
-                                    :rules="validationRules.requesterEmail"
-                                >
-                                    <label class="block mb-2" for="email"
-                                        >Your Email
-                                        <span class="text-red-500">*</span>
-                                        <i
-                                            v-tooltip.right="
-                                                fieldHelp.requesterEmail
-                                            "
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <InputText
-                                        id="email"
-                                        v-bind="field"
-                                        type="email"
-                                        placeholder="john@example.com"
-                                        :class="{
-                                            'p-invalid':
-                                                errorMessage &&
-                                                fieldMeta.touched,
-                                        }"
-                                        class="w-full"
-                                    />
-                                    <small
-                                        v-if="errorMessage && fieldMeta.touched"
-                                        class="p-error block mt-1"
-                                    >
-                                        {{ errorMessage }}
-                                    </small>
-                                </Field>
-                            </div>
-                            <div class="col-12 md:col-6 lg:col-4">
-                                <Field
-                                    v-slot="{ value, handleChange }"
-                                    name="notify"
-                                >
-                                    <label class="block mb-2"
-                                        >Email Notifications
-                                        <i
-                                            v-tooltip.right="fieldHelp.notify"
-                                            class="pi pi-info-circle ml-2 text-400 cursor-help"
-                                    /></label>
-                                    <div class="flex align-items-center h-3rem">
-                                        <InputSwitch
-                                            :model-value="value"
-                                            @update:model-value="handleChange"
-                                        />
-                                        <span class="ml-2 text-600"
-                                            >Receive updates about this
-                                            idea</span
-                                        >
-                                    </div>
-                                </Field>
-                            </div>
-                            <div class="col-12">
-                                <Field
-                                    v-slot="{
-                                        errorMessage,
-                                        value,
-                                        handleChange,
-                                    }"
-                                    name="terms"
-                                    :rules="validationRules.terms"
-                                >
-                                    <div class="flex align-items-center gap-2">
-                                        <Checkbox
-                                            :model-value="value"
-                                            input-id="terms"
-                                            :binary="true"
-                                            :class="{
-                                                'p-invalid': errorMessage,
-                                            }"
-                                            @update:model-value="handleChange"
-                                        />
-                                        <label for="terms"
-                                            >I confirm the information provided
-                                            is accurate and I agree to the terms
-                                            of service
+                                        <label class="block mb-2"
+                                            >Impact Score
                                             <span class="text-red-500">*</span>
                                             <i
                                                 v-tooltip.right="
-                                                    fieldHelp.terms
+                                                    fieldHelp.impact
                                                 "
                                                 class="pi pi-info-circle ml-2 text-400 cursor-help"
                                         /></label>
-                                    </div>
-                                    <small
-                                        v-if="errorMessage"
-                                        class="p-error block mt-1"
+                                        <Slider
+                                            :model-value="value"
+                                            :min="1"
+                                            :max="10"
+                                            :class="{
+                                                'p-invalid':
+                                                    errorMessage &&
+                                                    fieldMeta.touched,
+                                            }"
+                                            @update:model-value="handleChange"
+                                        />
+                                        <div
+                                            class="flex justify-content-between"
+                                        >
+                                            <small class="text-600">
+                                                Score: {{ value || 5 }}
+                                            </small>
+                                            <small
+                                                v-if="
+                                                    errorMessage &&
+                                                    fieldMeta.touched
+                                                "
+                                                class="p-error"
+                                            >
+                                                {{ errorMessage }}
+                                            </small>
+                                        </div>
+                                    </Field>
+                                </div>
+                                <div class="col-12 md:col-6 lg:col-3">
+                                    <Field
+                                        v-slot="{
+                                            errorMessage,
+                                            meta: fieldMeta,
+                                            value,
+                                            handleChange,
+                                        }"
+                                        name="reach"
+                                        :rules="validationRules.reach"
                                     >
-                                        {{ errorMessage }}
-                                    </small>
-                                </Field>
+                                        <label class="block mb-2"
+                                            >Expected Reach
+                                            <span class="text-red-500">*</span>
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.reach
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <InputNumber
+                                            :model-value="value"
+                                            :min="1"
+                                            :step="100"
+                                            mode="decimal"
+                                            placeholder="Number of users"
+                                            :class="{
+                                                'p-invalid':
+                                                    errorMessage &&
+                                                    fieldMeta.touched,
+                                            }"
+                                            class="w-full"
+                                            @update:model-value="handleChange"
+                                        />
+                                        <small
+                                            v-if="
+                                                errorMessage &&
+                                                fieldMeta.touched
+                                            "
+                                            class="p-error block mt-1"
+                                        >
+                                            {{ errorMessage }}
+                                        </small>
+                                    </Field>
+                                </div>
+                                <div class="col-12 md:col-6 lg:col-3">
+                                    <Field
+                                        v-slot="{
+                                            errorMessage,
+                                            meta: fieldMeta,
+                                            value,
+                                            handleChange,
+                                        }"
+                                        name="targetDate"
+                                        :rules="validationRules.targetDate"
+                                    >
+                                        <label class="block mb-2"
+                                            >Target Date
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.targetDate
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <Calendar
+                                            :model-value="value"
+                                            :show-icon="true"
+                                            :min-date="new Date()"
+                                            date-format="mm/dd/yy"
+                                            placeholder="Select target date"
+                                            :class="{
+                                                'p-invalid':
+                                                    errorMessage &&
+                                                    fieldMeta.touched,
+                                            }"
+                                            class="w-full"
+                                            @update:model-value="handleChange"
+                                        />
+                                        <small
+                                            v-if="
+                                                errorMessage &&
+                                                fieldMeta.touched
+                                            "
+                                            class="p-error block mt-1"
+                                        >
+                                            {{ errorMessage }}
+                                        </small>
+                                    </Field>
+                                </div>
                             </div>
-                        </div>
-                    </Panel>
+                        </Panel>
+                    </div>
+
+                    <!-- Technical Section -->
+                    <div id="section-technical" class="col-12 section-panel">
+                        <Panel
+                            header="Technical Details"
+                            class="section-technical-panel"
+                        >
+                            <div class="grid">
+                                <div class="col-12 md:col-6 lg:col-4">
+                                    <Field
+                                        v-slot="{
+                                            errorMessage,
+                                            meta: fieldMeta,
+                                            value,
+                                            handleChange,
+                                        }"
+                                        name="complexity"
+                                        :rules="validationRules.complexity"
+                                    >
+                                        <label class="block mb-2"
+                                            >Complexity
+                                            <span class="text-red-500">*</span>
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.complexity
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <Dropdown
+                                            :model-value="value"
+                                            :options="complexityOptions"
+                                            placeholder="Select complexity"
+                                            :class="{
+                                                'p-invalid':
+                                                    errorMessage &&
+                                                    fieldMeta.touched,
+                                            }"
+                                            class="w-full"
+                                            @update:model-value="handleChange"
+                                        />
+                                        <small
+                                            v-if="
+                                                errorMessage &&
+                                                fieldMeta.touched
+                                            "
+                                            class="p-error block mt-1"
+                                        >
+                                            {{ errorMessage }}
+                                        </small>
+                                    </Field>
+                                </div>
+                                <div class="col-12 md:col-6 lg:col-4">
+                                    <Field
+                                        v-slot="{ value, handleChange }"
+                                        name="dependencies"
+                                    >
+                                        <label class="block mb-2"
+                                            >Dependencies
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.dependencies
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <Chips
+                                            :model-value="value"
+                                            separator=","
+                                            placeholder="Add dependencies"
+                                            class="w-full"
+                                            @update:model-value="handleChange"
+                                        />
+                                    </Field>
+                                </div>
+                                <div class="col-12 md:col-6 lg:col-4">
+                                    <Field
+                                        v-slot="{
+                                            field,
+                                            errorMessage,
+                                            meta: fieldMeta,
+                                        }"
+                                        name="repoUrl"
+                                        :rules="validationRules.repoUrl"
+                                    >
+                                        <label class="block mb-2" for="repo"
+                                            >Repository URL
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.repoUrl
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <InputText
+                                            id="repo"
+                                            v-bind="field"
+                                            placeholder="https://github.com/org/repo"
+                                            :class="{
+                                                'p-invalid':
+                                                    errorMessage &&
+                                                    fieldMeta.touched,
+                                            }"
+                                            class="w-full"
+                                        />
+                                        <small
+                                            v-if="
+                                                errorMessage &&
+                                                fieldMeta.touched
+                                            "
+                                            class="p-error block mt-1"
+                                        >
+                                            {{ errorMessage }}
+                                        </small>
+                                    </Field>
+                                </div>
+                                <div class="col-12">
+                                    <Field
+                                        v-slot="{ value, handleChange }"
+                                        name="privacy"
+                                        :rules="validationRules.privacy"
+                                    >
+                                        <label class="block mb-2"
+                                            >Privacy Setting
+                                            <span class="text-red-500">*</span>
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.privacy
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <div class="flex gap-3">
+                                            <div
+                                                class="flex align-items-center gap-2"
+                                            >
+                                                <RadioButton
+                                                    :model-value="value"
+                                                    input-id="privacy1"
+                                                    name="privacy"
+                                                    value="public"
+                                                    @update:model-value="
+                                                        handleChange
+                                                    "
+                                                />
+                                                <label for="privacy1"
+                                                    >Public</label
+                                                >
+                                            </div>
+                                            <div
+                                                class="flex align-items-center gap-2"
+                                            >
+                                                <RadioButton
+                                                    :model-value="value"
+                                                    input-id="privacy2"
+                                                    name="privacy"
+                                                    value="internal"
+                                                    @update:model-value="
+                                                        handleChange
+                                                    "
+                                                />
+                                                <label for="privacy2"
+                                                    >Internal</label
+                                                >
+                                            </div>
+                                            <div
+                                                class="flex align-items-center gap-2"
+                                            >
+                                                <RadioButton
+                                                    :model-value="value"
+                                                    input-id="privacy3"
+                                                    name="privacy"
+                                                    value="private"
+                                                    @update:model-value="
+                                                        handleChange
+                                                    "
+                                                />
+                                                <label for="privacy3"
+                                                    >Private</label
+                                                >
+                                            </div>
+                                        </div>
+                                    </Field>
+                                </div>
+                            </div>
+                        </Panel>
+                    </div>
+
+                    <!-- Contact & Meta Section -->
+                    <div id="section-contact" class="col-12 section-panel">
+                        <Panel
+                            header="Contact Information"
+                            class="section-contact-panel"
+                        >
+                            <div class="grid">
+                                <div class="col-12 md:col-6 lg:col-4">
+                                    <Field
+                                        v-slot="{
+                                            field,
+                                            errorMessage,
+                                            meta: fieldMeta,
+                                        }"
+                                        name="requesterName"
+                                        :rules="validationRules.requesterName"
+                                    >
+                                        <label class="block mb-2" for="name"
+                                            >Your Name
+                                            <span class="text-red-500">*</span>
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.requesterName
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <InputText
+                                            id="name"
+                                            v-bind="field"
+                                            placeholder="John Doe"
+                                            :class="{
+                                                'p-invalid':
+                                                    errorMessage &&
+                                                    fieldMeta.touched,
+                                            }"
+                                            class="w-full"
+                                        />
+                                        <small
+                                            v-if="
+                                                errorMessage &&
+                                                fieldMeta.touched
+                                            "
+                                            class="p-error block mt-1"
+                                        >
+                                            {{ errorMessage }}
+                                        </small>
+                                    </Field>
+                                </div>
+                                <div class="col-12 md:col-6 lg:col-4">
+                                    <Field
+                                        v-slot="{
+                                            field,
+                                            errorMessage,
+                                            meta: fieldMeta,
+                                        }"
+                                        name="requesterEmail"
+                                        :rules="validationRules.requesterEmail"
+                                    >
+                                        <label class="block mb-2" for="email"
+                                            >Your Email
+                                            <span class="text-red-500">*</span>
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.requesterEmail
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <InputText
+                                            id="email"
+                                            v-bind="field"
+                                            type="email"
+                                            placeholder="john@example.com"
+                                            :class="{
+                                                'p-invalid':
+                                                    errorMessage &&
+                                                    fieldMeta.touched,
+                                            }"
+                                            class="w-full"
+                                        />
+                                        <small
+                                            v-if="
+                                                errorMessage &&
+                                                fieldMeta.touched
+                                            "
+                                            class="p-error block mt-1"
+                                        >
+                                            {{ errorMessage }}
+                                        </small>
+                                    </Field>
+                                </div>
+                                <div class="col-12 md:col-6 lg:col-4">
+                                    <Field
+                                        v-slot="{ value, handleChange }"
+                                        name="notify"
+                                    >
+                                        <label class="block mb-2"
+                                            >Email Notifications
+                                            <i
+                                                v-tooltip.right="
+                                                    fieldHelp.notify
+                                                "
+                                                class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                        /></label>
+                                        <div
+                                            class="flex align-items-center h-3rem"
+                                        >
+                                            <InputSwitch
+                                                :model-value="value"
+                                                @update:model-value="
+                                                    handleChange
+                                                "
+                                            />
+                                            <span class="ml-2 text-600"
+                                                >Receive updates about this
+                                                idea</span
+                                            >
+                                        </div>
+                                    </Field>
+                                </div>
+                                <div class="col-12">
+                                    <Field
+                                        v-slot="{
+                                            errorMessage,
+                                            value,
+                                            handleChange,
+                                        }"
+                                        name="terms"
+                                        :rules="validationRules.terms"
+                                    >
+                                        <div
+                                            class="flex align-items-center gap-2"
+                                        >
+                                            <Checkbox
+                                                :model-value="value"
+                                                input-id="terms"
+                                                :binary="true"
+                                                :class="{
+                                                    'p-invalid': errorMessage,
+                                                }"
+                                                @update:model-value="
+                                                    handleChange
+                                                "
+                                            />
+                                            <label for="terms"
+                                                >I confirm the information
+                                                provided is accurate and I agree
+                                                to the terms of service
+                                                <span class="text-red-500"
+                                                    >*</span
+                                                >
+                                                <i
+                                                    v-tooltip.right="
+                                                        fieldHelp.terms
+                                                    "
+                                                    class="pi pi-info-circle ml-2 text-400 cursor-help"
+                                            /></label>
+                                        </div>
+                                        <small
+                                            v-if="errorMessage"
+                                            class="p-error block mt-1"
+                                        >
+                                            {{ errorMessage }}
+                                        </small>
+                                    </Field>
+                                </div>
+                            </div>
+                        </Panel>
+                    </div>
                 </div>
 
-                <!-- Form Actions -->
-                <div id="form-actions" class="col-12">
-                    <div
-                        class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3"
-                    >
-                        <div class="flex align-items-center gap-3">
-                            <div class="text-600 text-sm">
-                                <span class="text-red-500">*</span> Required
-                                fields
-                            </div>
-                            <div v-if="autoSaveStatus" class="text-sm">
-                                <span
-                                    v-if="autoSaveStatus === 'saving'"
-                                    class="text-blue-500"
-                                >
-                                    <i class="pi pi-spin pi-spinner mr-1" />
-                                    Saving draft...
-                                </span>
-                                <span
-                                    v-else-if="autoSaveStatus === 'saved'"
-                                    class="text-green-500"
-                                >
-                                    <i class="pi pi-check mr-1" />
-                                    Draft saved
-                                </span>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <Button
-                                label="Clear Form"
-                                icon="pi pi-times"
-                                severity="secondary"
-                                type="button"
-                                @click="clearForm"
-                            />
-                            <Button
-                                label="Save Draft"
-                                icon="pi pi-save"
-                                severity="info"
-                                type="button"
-                                :disabled="!meta.dirty"
-                                @click="() => saveDraft(values)"
-                            />
-                            <span
-                                v-tooltip.top="
-                                    !meta.valid
-                                        ? getMissingFieldsMessage(values)
-                                        : ''
-                                "
-                                class="inline-block"
-                            >
-                                <Button
-                                    label="Submit Idea"
-                                    icon="pi pi-check"
-                                    type="submit"
-                                    :loading="isSubmitting"
-                                    :disabled="!meta.valid || isSubmitting"
-                                />
-                            </span>
-                        </div>
+                <!-- Spacer for sticky footer -->
+                <div class="footer-spacer" />
+            </div>
+        </div>
+
+        <!-- Sticky Footer with Form Actions -->
+        <div id="form-actions" class="sticky-footer">
+            <div class="sticky-footer-content">
+                <div class="flex align-items-center gap-3">
+                    <div class="text-600 text-sm">
+                        <span class="text-red-500">*</span> Required fields
                     </div>
+                    <div v-if="autoSaveStatus" class="text-sm">
+                        <span
+                            v-if="autoSaveStatus === 'saving'"
+                            class="text-blue-500"
+                        >
+                            <i class="pi pi-spin pi-spinner mr-1" />
+                            Saving draft...
+                        </span>
+                        <span
+                            v-else-if="autoSaveStatus === 'saved'"
+                            class="text-green-500"
+                        >
+                            <i class="pi pi-check mr-1" />
+                            Draft saved
+                        </span>
+                    </div>
+                    <div class="progress-summary text-sm text-600">
+                        <strong>{{ formProgress }}%</strong> complete
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <Button
+                        label="Clear Form"
+                        icon="pi pi-times"
+                        severity="secondary"
+                        type="button"
+                        @click="clearForm"
+                    />
+                    <Button
+                        label="Save Draft"
+                        icon="pi pi-save"
+                        severity="info"
+                        type="button"
+                        :disabled="!meta.dirty"
+                        @click="() => saveDraft(values)"
+                    />
+                    <span
+                        v-tooltip.top="
+                            !meta.valid ? getMissingFieldsMessage(values) : ''
+                        "
+                        class="inline-block"
+                    >
+                        <Button
+                            label="Submit Idea"
+                            icon="pi pi-check"
+                            type="submit"
+                            :loading="isSubmitting"
+                            :disabled="!meta.valid || isSubmitting"
+                        />
+                    </span>
                 </div>
             </div>
         </div>
@@ -818,9 +947,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { Form, Field } from "vee-validate";
-import { useToast } from "primevue/usetoast";
+import { useToast } from "../composables/useToast";
 import { useIdeasStore } from "../stores/ideas";
 import Panel from "primevue/panel";
 import InputText from "primevue/inputtext";
@@ -836,6 +965,8 @@ import Checkbox from "primevue/checkbox";
 import InputSwitch from "primevue/inputswitch";
 import Button from "primevue/button";
 import Message from "primevue/message";
+import ProgressBar from "primevue/progressbar";
+import Tag from "primevue/tag";
 
 const toast = useToast();
 const ideasStore = useIdeasStore();
@@ -846,6 +977,254 @@ const showValidationSummary = ref(false);
 const submitSuccess = ref(false);
 const autoSaveStatus = ref(""); // 'saving', 'saved', or ''
 const autoSaveTimer = ref(null);
+const activeSection = ref("basics");
+
+// Sticky progress tracker state
+const isProgressSticky = ref(false);
+const progressTrackerRef = ref(null);
+const progressWrapperRef = ref(null);
+const progressTrackerTop = ref(0);
+const progressTrackerHeight = ref(0);
+
+// Section definitions
+const sections = [
+    {
+        id: "basics",
+        label: "Idea Basics",
+        fields: ["title", "category", "description", "tags"],
+    },
+    {
+        id: "impact",
+        label: "Impact & Priority",
+        fields: ["personas", "impact", "reach"],
+    },
+    {
+        id: "technical",
+        label: "Technical Details",
+        fields: ["complexity", "privacy"],
+    },
+    {
+        id: "contact",
+        label: "Contact Information",
+        fields: ["requesterName", "requesterEmail", "terms"],
+    },
+];
+
+// Progress tracking computed properties
+const totalFields = 8; // Required fields count
+
+// Use reactive values that will be passed from the Form component
+const currentFormValues = ref({});
+
+const filledFields = computed(() => {
+    let filled = 0;
+    const form = currentFormValues.value;
+    const fields = [
+        form.title,
+        form.category,
+        form.description,
+        form.tags?.length > 0,
+        form.personas?.length > 0,
+        form.complexity,
+        form.requesterName,
+        form.requesterEmail,
+    ];
+    fields.forEach((field) => {
+        if (field) filled++;
+    });
+    return filled;
+});
+
+const formProgress = computed(() => {
+    return Math.round((filledFields.value / totalFields) * 100);
+});
+
+const sectionProgress = computed(() => {
+    const form = currentFormValues.value;
+    return [
+        {
+            id: "basics",
+            name: "Basics",
+            complete: !!(
+                form.title &&
+                form.category &&
+                form.description &&
+                form.tags?.length > 0
+            ),
+            color: "#7c3aed",
+        },
+        {
+            id: "impact",
+            name: "Impact",
+            complete: !!(
+                form.personas?.length > 0 &&
+                form.impact &&
+                form.reach
+            ),
+            color: "#7c3aed",
+        },
+        {
+            id: "technical",
+            name: "Technical",
+            complete: !!(form.complexity && form.privacy),
+            color: "#7c3aed",
+        },
+        {
+            id: "contact",
+            name: "Contact",
+            complete: !!(
+                form.requesterName &&
+                form.requesterEmail &&
+                form.terms
+            ),
+            color: "#7c3aed",
+        },
+    ];
+});
+
+// Check if section is complete
+function isSectionComplete(sectionId, values) {
+    const section = sections.find((s) => s.id === sectionId);
+    if (!section) return false;
+
+    const requiredFields = {
+        basics: ["title", "category", "description", "tags"],
+        impact: ["personas", "impact", "reach"],
+        technical: ["complexity", "privacy"],
+        contact: ["requesterName", "requesterEmail", "terms"],
+    };
+
+    const fields = requiredFields[sectionId] || [];
+
+    return fields.every((field) => {
+        const value = values[field];
+        if (field === "tags" || field === "personas") {
+            return value && value.length > 0;
+        }
+        if (field === "terms") {
+            return value === true;
+        }
+        if (field === "title" || field === "description") {
+            return value && value.length >= (field === "title" ? 3 : 10);
+        }
+        if (field === "requesterEmail") {
+            return value && isValidEmail(value);
+        }
+        return value !== null && value !== undefined && value !== "";
+    });
+}
+
+// Scroll to section
+function scrollToSection(sectionId) {
+    const element = document.getElementById(`section-${sectionId}`);
+    if (element) {
+        const yOffset = -120; // Account for fixed header and progress tracker
+        const y =
+            element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+        activeSection.value = sectionId;
+    }
+}
+
+// Track active section on scroll
+onMounted(() => {
+    // Get the initial position of the progress tracker after DOM is ready
+    const updateProgressPosition = () => {
+        if (progressWrapperRef.value && !isProgressSticky.value) {
+            const rect = progressWrapperRef.value.getBoundingClientRect();
+            progressTrackerTop.value = rect.top + window.scrollY;
+            progressTrackerHeight.value =
+                progressTrackerRef.value?.offsetHeight || 0;
+        }
+    };
+
+    // Initial position calculation
+    setTimeout(updateProgressPosition, 100);
+
+    const handleScroll = () => {
+        // Update position if not sticky
+        if (!isProgressSticky.value) {
+            updateProgressPosition();
+        }
+
+        // Handle sticky progress tracker
+        if (progressWrapperRef.value) {
+            const scrollY = window.scrollY;
+
+            // Make sticky when scrolled past its natural position
+            if (scrollY > progressTrackerTop.value) {
+                isProgressSticky.value = true;
+                // Set wrapper height to prevent layout jump
+                if (progressWrapperRef.value) {
+                    progressWrapperRef.value.style.height = `${progressTrackerHeight.value}px`;
+                }
+            } else {
+                isProgressSticky.value = false;
+                // Reset wrapper height
+                if (progressWrapperRef.value) {
+                    progressWrapperRef.value.style.height = "auto";
+                }
+            }
+        }
+
+        // Handle active section detection
+        const scrollPosition = window.scrollY + 150;
+
+        for (const section of sections) {
+            const element = document.getElementById(`section-${section.id}`);
+            if (element) {
+                const { top, bottom } = element.getBoundingClientRect();
+                const elementTop = top + window.scrollY;
+                const elementBottom = bottom + window.scrollY;
+
+                if (
+                    scrollPosition >= elementTop &&
+                    scrollPosition <= elementBottom
+                ) {
+                    activeSection.value = section.id;
+                    break;
+                }
+            }
+        }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    // Load draft on mount
+    const draft = localStorage.getItem("draft_submit_idea");
+    if (draft) {
+        try {
+            const draftData = JSON.parse(draft);
+            // Update initial values with draft data
+            formInitialValues.value = {
+                ...formInitialValues.value,
+                ...draftData,
+            };
+
+            // If formRef is available, set the values directly
+            if (formRef.value) {
+                formRef.value.setValues(draftData);
+            }
+
+            toast.add({
+                severity: "info",
+                summary: "Draft Loaded",
+                detail: "Your previous draft has been restored.",
+                life: 3000,
+            });
+        } catch (error) {
+            console.error("Failed to load draft:", error);
+        }
+    }
+
+    // Cleanup
+    onUnmounted(() => {
+        window.removeEventListener("scroll", handleScroll);
+        if (autoSaveTimer.value) {
+            clearTimeout(autoSaveTimer.value);
+        }
+    });
+});
 
 // Options
 const categories = [
@@ -863,150 +1242,24 @@ const personas = [
 ];
 const complexityOptions = ["Low", "Medium", "High"];
 
-// Field help content for tooltips
+// Field help content for tooltips (same as original)
 const fieldHelp = {
-    title: `A concise, descriptive title for your idea.
-
-Examples:
-• "Add Dark Mode Toggle to Settings"
-• "Implement CSV Export for Reports"
-• "Optimize Dashboard Load Time"
-
-Tips:
-• Be specific about the feature
-• Avoid generic titles like "New Feature"
-• Keep it under 100 characters`,
-
-    category: `Select the area most impacted by your idea.
-
-• Platform: Core system functionality
-• UI: User interface improvements
-• Performance: Speed and optimization
-• Integrations: Third-party connections
-• Security: Safety and access control`,
-
-    description: `Explain your idea in detail.
-
-Include:
-• What problem it solves
-• Who will benefit
-• Expected outcome
-
-Example:
-"Users currently have to manually export data one table at a time. This feature would allow bulk export of all related data with a single click, saving hours of work for analysts."`,
-
-    tags: `Add keywords to help categorize your idea.
-
-Examples:
-• Feature tags: export, automation, analytics
-• Tech tags: api, database, frontend
-• Priority tags: urgent, nice-to-have
-
-Tip: Press Enter after each tag`,
-
-    personas: `Select all user groups who will benefit.
-
-• Admin: System administrators
-• Developer: Technical users & API consumers
-• Analyst: Data and reporting users
-• End User: General application users
-
-Tip: Select multiple if applicable`,
-
-    impact: `Rate the potential impact (1-10).
-
-1-3: Minor improvement
-4-6: Moderate enhancement
-7-9: Major feature
-10: Game-changing
-
-Consider: User base size, time saved, revenue impact`,
-
-    reach: `Estimated number of users affected.
-
-Examples:
-• Internal tool: 50-200 users
-• Department feature: 500-1000
-• Company-wide: 5000+
-• Customer-facing: 10000+`,
-
-    targetDate: `When should this be implemented?
-
-Consider:
-• Business deadlines
-• Seasonal requirements
-• Dependencies on other features
-• Resource availability`,
-
-    complexity: `Technical implementation difficulty.
-
-Low: < 1 week, minimal risk
-• Simple UI changes
-• Config updates
-
-Medium: 1-4 weeks, some risk
-• New features
-• Integration work
-
-High: > 1 month, significant risk
-• Architecture changes
-• Multiple system impacts`,
-
-    dependencies: `List any prerequisites or related items.
-
-Examples:
-• "Requires API v2 upgrade"
-• "Depends on user auth system"
-• "Needs design approval"
-• "Related to ticket #1234"`,
-
-    repoUrl: `Link to relevant code repository.
-
-Examples:
-• https://github.com/company/project
-• https://gitlab.com/team/app
-• https://bitbucket.org/workspace/repo
-
-Optional but helpful for technical review`,
-
-    privacy: `Who can view this idea?
-
-• Public: Everyone can see
-• Internal: Company employees only
-• Private: Only you and admins
-
-Default: Internal for most ideas`,
-
-    requesterName: `Your full name for follow-up.
-
-This helps us:
-• Contact you for clarification
-• Give credit for the idea
-• Include you in implementation discussions`,
-
-    requesterEmail: `Valid email for notifications.
-
-You'll receive updates on:
-• Status changes
-• Comments from reviewers
-• Implementation timeline
-• Questions from the team`,
-
-    notify: `Email notification preferences.
-
-When enabled, you'll get notified about:
-• Idea approval/rejection
-• Status updates
-• Comments and questions
-• Implementation progress`,
-
-    terms: `Agreement to submission terms.
-
-By checking, you confirm:
-• Information is accurate
-• Idea is original or properly attributed
-• You accept the review process
-• Implementation is at company discretion`,
+    title: `A concise, descriptive title for your idea.`,
+    category: `Select the area most impacted by your idea.`,
+    description: `Explain your idea in detail.`,
+    tags: `Add keywords to help categorize your idea.`,
+    personas: `Select all user groups who will benefit.`,
+    impact: `Rate the potential impact (1-10).`,
+    reach: `Estimated number of users affected.`,
+    targetDate: `When should this be implemented?`,
+    complexity: `Technical implementation difficulty.`,
+    dependencies: `List any prerequisites or related items.`,
+    repoUrl: `Link to relevant code repository.`,
+    privacy: `Who can view this idea?`,
+    requesterName: `Your full name for follow-up.`,
+    requesterEmail: `Valid email for notifications.`,
+    notify: `Email notification preferences.`,
+    terms: `Agreement to submission terms.`,
 };
 
 // Initial form values (reactive for draft loading)
@@ -1029,7 +1282,7 @@ const formInitialValues = ref({
     terms: false,
 });
 
-// Validation rules
+// Validation rules (same as original)
 const validationRules = {
     title: (value) => {
         if (!value) return "Title is required";
@@ -1084,11 +1337,6 @@ const validationRules = {
         if (value) {
             const urlPattern = /^https?:\/\/.+/;
             if (!urlPattern.test(value)) return "Must be a valid URL";
-            const githubPattern =
-                /^https?:\/\/(www\.)?github\.com\/[\w-]+\/[\w.-]+\/?$/;
-            if (value.includes("github.com") && !githubPattern.test(value)) {
-                return "Must be a valid GitHub repository URL";
-            }
         }
         return true;
     },
@@ -1116,6 +1364,9 @@ const validationRules = {
 
 // Form submission
 async function onSubmit(values, { resetForm }) {
+    // Prevent double submission
+    if (isSubmitting.value) return;
+
     showValidationSummary.value = true;
     isSubmitting.value = true;
 
@@ -1147,24 +1398,31 @@ async function onSubmit(values, { resetForm }) {
         // Clear saved draft
         localStorage.removeItem("draft_submit_idea");
 
-        // Show success
-        submitSuccess.value = true;
+        // Show success with prominent toast (only one)
         toast.add({
             severity: "success",
-            summary: "Success",
-            detail: "Your idea has been submitted successfully!",
-            life: 5000,
+            summary: "Idea Submitted Successfully!",
+            detail: "Your idea has been submitted and will be reviewed by our team. Thank you for your contribution!",
+            life: 8000,
         });
 
-        // Reset form
-        resetForm();
-        showValidationSummary.value = false;
+        // Don't show the inline message to avoid duplication
+        // submitSuccess.value = true;
+
+        // Reset form after a short delay
+        setTimeout(() => {
+            resetForm();
+            showValidationSummary.value = false;
+            submitSuccess.value = false;
+        }, 3000);
     } catch (error) {
         toast.add({
             severity: "error",
-            summary: "Error",
-            detail: "Failed to submit idea. Please try again.",
-            life: 5000,
+            summary: "Submission Failed",
+            detail:
+                error.message ||
+                "Failed to submit your idea. Please check your connection and try again.",
+            life: 6000,
         });
     } finally {
         isSubmitting.value = false;
@@ -1176,131 +1434,110 @@ const formRef = ref(null);
 
 // Save draft to localStorage
 function saveDraft(values, showToast = true) {
-    // Use the values passed from the form slot
     localStorage.setItem("draft_submit_idea", JSON.stringify(values));
     if (showToast) {
         toast.add({
-            severity: "info",
+            severity: "success",
             summary: "Draft Saved",
-            detail: "Your draft has been saved locally.",
-            life: 3000,
+            detail: "Your draft has been saved locally and will be restored when you return.",
+            life: 4000,
+            styleClass: "bread",
+            contentStyleClass: "bread",
         });
     }
 }
 
 // Auto-save draft with debounce
 function autoSaveDraft(values) {
-    // Clear any existing timer
     if (autoSaveTimer.value) {
         clearTimeout(autoSaveTimer.value);
     }
 
-    // Don't auto-save if the form was just submitted successfully
     if (submitSuccess.value) {
         return;
     }
 
-    // Show saving status
     autoSaveStatus.value = "saving";
 
-    // Set a new timer for auto-save (2 second debounce)
     autoSaveTimer.value = setTimeout(() => {
-        saveDraft(values, false); // Don't show toast for auto-save
+        saveDraft(values, false);
         autoSaveStatus.value = "saved";
 
-        // Clear the saved status after 3 seconds
         setTimeout(() => {
             autoSaveStatus.value = "";
         }, 3000);
     }, 2000);
 }
 
-// Watch form values for changes (called from template)
+// Watch form values for changes
 const lastFormValues = ref(null);
 function watchFormValues(values) {
-    // Compare with last values to detect changes
+    // Update currentFormValues for computed properties
+    currentFormValues.value = values;
+
     if (JSON.stringify(values) !== JSON.stringify(lastFormValues.value)) {
         lastFormValues.value = { ...values };
         autoSaveDraft(values);
     }
-    return ""; // Return empty string so nothing is rendered
+    return "";
 }
 
 // Get missing required fields message for tooltip
 function getMissingFieldsMessage(values) {
     const sections = {};
 
-    // Check Idea Basics section
-    if (!values.title || values.title.length < 3) {
-        if (!sections["Idea Basics"]) sections["Idea Basics"] = [];
-        sections["Idea Basics"].push("Title");
-    }
-    if (!values.category) {
-        if (!sections["Idea Basics"]) sections["Idea Basics"] = [];
-        sections["Idea Basics"].push("Category");
-    }
-    if (!values.description || values.description.length < 10) {
-        if (!sections["Idea Basics"]) sections["Idea Basics"] = [];
-        sections["Idea Basics"].push("Description");
-    }
-    if (!values.tags || values.tags.length === 0) {
-        if (!sections["Idea Basics"]) sections["Idea Basics"] = [];
-        sections["Idea Basics"].push("Tags");
+    // Check each section
+    if (!isSectionComplete("basics", values)) {
+        sections["Idea Basics"] = [];
+        if (!values.title || values.title.length < 3)
+            sections["Idea Basics"].push("Title");
+        if (!values.category) sections["Idea Basics"].push("Category");
+        if (!values.description || values.description.length < 10)
+            sections["Idea Basics"].push("Description");
+        if (!values.tags || values.tags.length === 0)
+            sections["Idea Basics"].push("Tags");
     }
 
-    // Check Impact & Priority section
-    if (!values.personas || values.personas.length === 0) {
-        if (!sections["Impact & Priority"]) sections["Impact & Priority"] = [];
-        sections["Impact & Priority"].push("Target Personas");
-    }
-    if (!values.impact) {
-        if (!sections["Impact & Priority"]) sections["Impact & Priority"] = [];
-        sections["Impact & Priority"].push("Impact Score");
-    }
-    if (!values.reach || values.reach < 1) {
-        if (!sections["Impact & Priority"]) sections["Impact & Priority"] = [];
-        sections["Impact & Priority"].push("Expected Reach");
+    if (!isSectionComplete("impact", values)) {
+        sections["Impact & Priority"] = [];
+        if (!values.personas || values.personas.length === 0)
+            sections["Impact & Priority"].push("Target Personas");
+        if (!values.impact) sections["Impact & Priority"].push("Impact Score");
+        if (!values.reach || values.reach < 1)
+            sections["Impact & Priority"].push("Expected Reach");
     }
 
-    // Check Technical Details section
-    if (!values.complexity) {
-        if (!sections["Technical Details"]) sections["Technical Details"] = [];
-        sections["Technical Details"].push("Complexity");
-    }
-    if (!values.privacy) {
-        if (!sections["Technical Details"]) sections["Technical Details"] = [];
-        sections["Technical Details"].push("Privacy Setting");
+    if (!isSectionComplete("technical", values)) {
+        sections["Technical Details"] = [];
+        if (!values.complexity)
+            sections["Technical Details"].push("Complexity");
+        if (!values.privacy)
+            sections["Technical Details"].push("Privacy Setting");
     }
 
-    // Check Contact Information section
-    if (!values.requesterName || values.requesterName.length < 2) {
-        if (!sections["Contact Information"])
-            sections["Contact Information"] = [];
-        sections["Contact Information"].push("Your Name");
-    }
-    if (!values.requesterEmail || !isValidEmail(values.requesterEmail)) {
-        if (!sections["Contact Information"])
-            sections["Contact Information"] = [];
-        sections["Contact Information"].push("Your Email");
-    }
-    if (!values.terms) {
-        if (!sections["Contact Information"])
-            sections["Contact Information"] = [];
-        sections["Contact Information"].push("Terms Agreement");
+    if (!isSectionComplete("contact", values)) {
+        sections["Contact Information"] = [];
+        if (!values.requesterName || values.requesterName.length < 2)
+            sections["Contact Information"].push("Your Name");
+        if (!values.requesterEmail || !isValidEmail(values.requesterEmail))
+            sections["Contact Information"].push("Your Email");
+        if (!values.terms)
+            sections["Contact Information"].push("Terms Agreement");
     }
 
-    // Build the message
     if (Object.keys(sections).length === 0) {
         return "";
     }
 
     let message = "Missing required fields:\n\n";
     for (const [section, fields] of Object.entries(sections)) {
-        message += `${section}:\n`;
-        fields.forEach((field) => {
-            message += `  • ${field}\n`;
-        });
-        message += "\n";
+        if (fields.length > 0) {
+            message += `${section}:\n`;
+            fields.forEach((field) => {
+                message += `  • ${field}\n`;
+            });
+            message += "\n";
+        }
     }
 
     return message.trim();
@@ -1314,13 +1551,15 @@ function isValidEmail(email) {
 
 // Clear form
 function clearForm() {
-    if (confirm("Are you sure you want to clear all form data?")) {
-        // Clear any pending auto-save
+    if (
+        confirm(
+            "Are you sure you want to clear all form data? This cannot be undone."
+        )
+    ) {
         if (autoSaveTimer.value) {
             clearTimeout(autoSaveTimer.value);
         }
 
-        // Reset form using VeeValidate's resetForm
         if (formRef.value) {
             formRef.value.resetForm();
         }
@@ -1328,47 +1567,198 @@ function clearForm() {
         showValidationSummary.value = false;
         submitSuccess.value = false;
         autoSaveStatus.value = "";
+
+        toast.add({
+            severity: "info",
+            summary: "Form Cleared",
+            detail: "All form data has been cleared.",
+            life: 3000,
+        });
     }
 }
-
-// Load draft on mount
-onMounted(() => {
-    const draft = localStorage.getItem("draft_submit_idea");
-    if (draft) {
-        try {
-            const draftData = JSON.parse(draft);
-            // Update initial values with draft data
-            formInitialValues.value = {
-                ...formInitialValues.value,
-                ...draftData,
-            };
-
-            // If formRef is available, set the values directly
-            if (formRef.value) {
-                formRef.value.setValues(draftData);
-            }
-
-            toast.add({
-                severity: "info",
-                summary: "Draft Loaded",
-                detail: "Your previous draft has been restored.",
-                life: 3000,
-            });
-        } catch (error) {
-            console.error("Failed to load draft:", error);
-        }
-    }
-});
-
-// Clean up timer on unmount
-onUnmounted(() => {
-    if (autoSaveTimer.value) {
-        clearTimeout(autoSaveTimer.value);
-    }
-});
 </script>
 
 <style scoped>
+/* Progress Wrapper - maintains layout when progress bar becomes fixed */
+.progress-wrapper {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+/* Progress Container Styles */
+.progress-container {
+    position: relative;
+    background: var(--surface-card);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--surface-border);
+    transition:
+        box-shadow 0.2s,
+        border-radius 0.2s;
+}
+
+.progress-container.is-sticky {
+    position: fixed;
+    top: 0; /* Stick to the very top of viewport */
+    left: 0;
+    right: 0;
+    z-index: 1001; /* Above nav header (which is at 1000) */
+    margin-bottom: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.progress-info {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Responsive text utilities */
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.text-xs {
+    font-size: 0.75rem;
+}
+
+.text-600 {
+    color: var(--text-color-secondary);
+}
+
+.text-primary {
+    color: var(--primary-color);
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.white-space-nowrap {
+    white-space: nowrap;
+}
+
+/* Hide/show on mobile */
+@media (max-width: 576px) {
+    .hidden.sm\:inline {
+        display: none !important;
+    }
+    .inline.sm\:hidden {
+        display: inline !important;
+    }
+}
+
+@media (min-width: 577px) {
+    .hidden.sm\:inline {
+        display: inline !important;
+    }
+    .inline.sm\:hidden {
+        display: none !important;
+    }
+}
+
+/* Bread, not toast */
+.bread {
+    color: #efefef;
+}
+
+/* Tag cursor style */
+.p-tag.cursor-pointer:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+/* Section tag styles */
+.section-tag {
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.section-tag:not(.p-tag-success) {
+    background: transparent;
+    border-width: 2px;
+}
+
+.section-tag.p-tag-success {
+    font-weight: 600;
+}
+
+/* Form Content Adjustments */
+.form-content {
+    padding-bottom: 100px; /* Space for sticky footer */
+}
+
+.section-panel {
+    scroll-margin-top: 100px; /* Account for sticky progress tracker */
+}
+
+.section-status {
+    margin-right: 0.5rem;
+}
+
+/* Sticky Footer Styles */
+.sticky-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface-card);
+    border-top: 1px solid var(--surface-border);
+    padding: 1rem;
+    z-index: 99;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.sticky-footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.footer-spacer {
+    height: 80px; /* Match footer height */
+}
+
+.progress-summary {
+    padding: 0.5rem 1rem;
+    background: var(--surface-100);
+    border-radius: 20px;
+}
+
+/* Dark theme adjustments */
+.dark-theme .progress-tracker-container {
+    background: var(--surface-ground);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .progress-track {
+    background: var(--surface-600);
+}
+
+.dark-theme .step-indicator {
+    background: var(--surface-700);
+    border-color: var(--surface-600);
+}
+
+.dark-theme .sticky-footer {
+    background: var(--surface-card);
+    border-top-color: var(--surface-600);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .progress-summary {
+    background: var(--surface-700);
+}
+
+/* Existing styles from original */
 .p-invalid {
     border-color: var(--red-500) !important;
 }
@@ -1377,7 +1767,6 @@ onUnmounted(() => {
     color: var(--red-500);
 }
 
-/* Screen reader only class for skip links */
 .sr-only {
     position: absolute;
     width: 1px;
@@ -1402,13 +1791,157 @@ onUnmounted(() => {
     white-space: normal;
 }
 
-/* Improve focus visibility */
 :focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
 }
 
-/* Mobile responsiveness improvements */
+/* Section Color Coding - Subtle tints */
+.section-basics-panel :deep(.p-panel-header) {
+    background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.1) 0%,
+        rgba(118, 75, 162, 0.1) 100%
+    );
+    border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+.section-basics-panel :deep(.p-panel-header .p-panel-title) {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.section-impact-panel :deep(.p-panel-header) {
+    background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.1) 0%,
+        rgba(118, 75, 162, 0.1) 100%
+    );
+    border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+.section-impact-panel :deep(.p-panel-header .p-panel-title) {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.section-technical-panel :deep(.p-panel-header) {
+    background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.1) 0%,
+        rgba(118, 75, 162, 0.1) 100%
+    );
+    border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+.section-technical-panel :deep(.p-panel-header .p-panel-title) {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.section-contact-panel :deep(.p-panel-header) {
+    background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.1) 0%,
+        rgba(118, 75, 162, 0.1) 100%
+    );
+    border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+.section-contact-panel :deep(.p-panel-header .p-panel-title) {
+    color: #667eea;
+    font-weight: 600;
+}
+
+/* Dark theme adjustments for section colors */
+.dark-theme .section-basics-panel :deep(.p-panel-header) {
+    background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.15) 0%,
+        rgba(118, 75, 162, 0.15) 100%
+    );
+    border-bottom: 2px solid rgba(102, 126, 234, 0.4);
+}
+
+.dark-theme .section-basics-panel :deep(.p-panel-header .p-panel-title) {
+    color: #8b9ef0;
+}
+
+.dark-theme .section-impact-panel :deep(.p-panel-header) {
+    background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.15) 0%,
+        rgba(118, 75, 162, 0.15) 100%
+    );
+    border-bottom: 2px solid rgba(102, 126, 234, 0.4);
+}
+
+.dark-theme .section-impact-panel :deep(.p-panel-header .p-panel-title) {
+    color: #8b9ef0;
+}
+
+.dark-theme .section-technical-panel :deep(.p-panel-header) {
+    background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.15) 0%,
+        rgba(118, 75, 162, 0.15) 100%
+    );
+    border-bottom: 2px solid rgba(102, 126, 234, 0.4);
+}
+
+.dark-theme .section-technical-panel :deep(.p-panel-header .p-panel-title) {
+    color: #8b9ef0;
+}
+
+.dark-theme .section-contact-panel :deep(.p-panel-header) {
+    background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.15) 0%,
+        rgba(118, 75, 162, 0.15) 100%
+    );
+    border-bottom: 2px solid rgba(102, 126, 234, 0.4);
+}
+
+.dark-theme .section-contact-panel :deep(.p-panel-header .p-panel-title) {
+    color: #8b9ef0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .progress-steps {
+        gap: 0.5rem;
+    }
+
+    .step-indicator {
+        width: 32px;
+        height: 32px;
+        font-size: 0.875rem;
+    }
+
+    .step-label {
+        font-size: 0.75rem;
+    }
+
+    .sticky-footer-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .sticky-footer-content > div:first-child {
+        text-align: center;
+    }
+
+    .sticky-footer-content > div:last-child {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .progress-summary {
+        display: inline-block;
+    }
+}
+
 @media (max-width: 576px) {
     .surface-card {
         padding: 1rem !important;
@@ -1416,6 +1949,14 @@ onUnmounted(() => {
 
     .p-panel .p-panel-content {
         padding: 1rem;
+    }
+
+    .step-label {
+        display: none;
+    }
+
+    .progress-tracker-container {
+        padding: 0.75rem 0;
     }
 }
 </style>
