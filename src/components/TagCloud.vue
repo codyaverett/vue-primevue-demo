@@ -41,11 +41,11 @@ const props = defineProps({
     },
     minFontSize: {
         type: Number,
-        default: 12,
+        default: 16,
     },
     maxFontSize: {
         type: Number,
-        default: 48,
+        default: 72,
     },
     padding: {
         type: Number,
@@ -83,16 +83,19 @@ const processTagData = () => {
     // Create scale for font sizes - responsive to container width
     const container = cloudContainer.value;
     const width = container.clientWidth;
+    const isMobile = width < 500;
 
-    // Adjust max font size based on container width
+    // More aggressive font sizes to fill container
     const responsiveMaxFontSize = Math.min(
         props.maxFontSize,
-        Math.max(24, width / 15) // Scale down for smaller containers
+        isMobile
+            ? Math.min(32, width / 10)
+            : Math.min(props.maxFontSize, width / 8)
     );
 
-    const responsiveMinFontSize = Math.min(
-        props.minFontSize,
-        responsiveMaxFontSize / 4
+    const responsiveMinFontSize = Math.max(
+        isMobile ? 12 : 16,
+        Math.min(props.minFontSize, responsiveMaxFontSize / 3)
     );
 
     const fontScale = d3
@@ -117,7 +120,12 @@ const drawCloud = () => {
     d3.select(cloudContainer.value).selectAll("*").remove();
 
     const container = cloudContainer.value;
-    const width = container.clientWidth || container.offsetWidth;
+    const containerRect = container.getBoundingClientRect();
+    const availableWidth = Math.min(
+        containerRect.width,
+        window.innerWidth - 40 // Leave margin for mobile
+    );
+    const width = availableWidth > 0 ? availableWidth : container.clientWidth;
     const height = Math.min(props.height, window.innerHeight * 0.4);
 
     // Don't draw if container is too small
@@ -142,16 +150,6 @@ const drawCloud = () => {
 
     // Color scale
     const colorScale = d3.scaleOrdinal().range(props.colors);
-
-    // Rotation scale
-    const rotationScale = d3
-        .scaleOrdinal()
-        .range(
-            Array.from(
-                { length: props.rotations },
-                (_, i) => (i - Math.floor(props.rotations / 2)) * 30
-            )
-        );
 
     // Create tooltip
     const tooltip = d3
@@ -267,16 +265,35 @@ const drawCloud = () => {
         loading.value = false;
     };
 
+    // Mobile-optimized configuration
+    const isMobile = width < 500;
+    const mobilePadding = isMobile ? 2 : props.padding;
+    const mobileSpiral = isMobile ? "rectangular" : props.spiral;
+
+    // Show more tags to better fill space
+    const wordsToProcess = isMobile
+        ? processedTags.slice(0, Math.min(20, processedTags.length))
+        : processedTags.slice(0, Math.min(40, processedTags.length));
+
+    // Use more of the available container space
+    const safeWidth = isMobile ? width - 30 : width - 10;
+    const safeHeight = isMobile ? height - 20 : height - 10;
+
     // Configure and start the word cloud layout
     const layout = cloud()
-        .size([width, height])
-        .words(processedTags)
-        .padding(props.padding)
-        .rotate((d) => rotationScale(d.text))
+        .size([Math.max(100, safeWidth), Math.max(100, safeHeight)])
+        .words(wordsToProcess)
+        .padding(mobilePadding)
+        .rotate(() => {
+            // Limited rotation for better readability but visual interest
+            if (isMobile) return 0;
+            const angles = [-30, -15, 0, 15, 30];
+            return angles[Math.floor(Math.random() * angles.length)];
+        })
         .font("system-ui")
         .fontWeight("bold")
         .fontSize((d) => d.size)
-        .spiral(props.spiral)
+        .spiral(mobileSpiral)
         .on("end", draw);
 
     layout.start();
@@ -329,12 +346,23 @@ defineExpose({
 .tag-cloud-container {
     position: relative;
     width: 100%;
+    max-width: 100%;
     background: linear-gradient(
         135deg,
         var(--surface-50) 0%,
         var(--surface-0) 100%
     );
     border-radius: 8px;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.tag-cloud-container svg {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
     overflow: hidden;
 }
 
@@ -362,5 +390,22 @@ defineExpose({
 
 :deep(.tag-tooltip) {
     transition: opacity 0.2s ease;
+}
+
+/* Mobile specific styles */
+@media (max-width: 400px) {
+    .tag-cloud-container {
+        padding: 0 5px;
+    }
+
+    :deep(.tag-tooltip) {
+        font-size: 10px !important;
+        padding: 6px 8px !important;
+        max-width: 150px;
+    }
+
+    :deep(text) {
+        pointer-events: all;
+    }
 }
 </style>
