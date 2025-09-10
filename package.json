@@ -10,7 +10,8 @@
         "lint": "eslint .",
         "format": "prettier --write .",
         "prepare": "husky",
-        "preinstall": "npx only-allow pnpm"
+        "preinstall": "npx only-allow pnpm",
+        "publish": "NODE_ENV=production pnpm run build && gh-pages -d dist --dotfiles"
     },
     "dependencies": {
         "@vee-validate/rules": "^4.15.1",
@@ -31,6 +32,7 @@
         "@vitejs/plugin-vue": "^5.0.0",
         "eslint": "^8.57.0",
         "eslint-plugin-vue": "^9.20.1",
+        "gh-pages": "^6.3.0",
         "husky": "^9.1.7",
         "lint-staged": "^16.1.6",
         "prettier": "^3.2.5",
