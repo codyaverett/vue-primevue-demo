@@ -1,5 +1,6 @@
 <template>
     <div class="app-container surface-ground text-color">
+        <Toast />
         <HeaderBar />
         <main class="main-content">
             <router-view v-slot="{ Component }">
@@ -14,6 +15,7 @@
 import { onMounted } from "vue";
 import HeaderBar from "./components/HeaderBar.vue";
 import { useTheme } from "./composables/useTheme";
+import Toast from "./components/Toast.vue";
 
 const { initTheme } = useTheme();
 
@@ -57,4 +59,6 @@ onMounted(() => {
 .main-content > *:not(.ideas-page) {
     flex: 1;
 }
+
+/* Custom toast styles are now handled in the Toast component */
 </style>
