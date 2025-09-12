@@ -106,3 +106,11 @@ test-pr-script: ## Test PR creation script (dry run) - alias for pr-dry-run
 .PHONY: pr-help
 pr-help: ## Show PR script help
 	@./scripts/pr help
+
+.PHONY: review
+review: ## Start UI review tool (Electron app)
+	pnpm run review
+
+.PHONY: review-dev
+review-dev: ## Start UI review tool with dev server
+	pnpm run review:dev
