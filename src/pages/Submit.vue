@@ -339,7 +339,6 @@
                                     >
                                         <label class="block mb-2"
                                             >Impact Score
-                                            <span class="text-red-500">*</span>
                                             <i
                                                 v-tooltip.right="
                                                     fieldHelp.impact
@@ -388,7 +387,6 @@
                                     >
                                         <label class="block mb-2"
                                             >Expected Reach
-                                            <span class="text-red-500">*</span>
                                             <i
                                                 v-tooltip.right="
                                                     fieldHelp.reach
@@ -588,7 +586,6 @@
                                     >
                                         <label class="block mb-2"
                                             >Privacy Setting
-                                            <span class="text-red-500">*</span>
                                             <i
                                                 v-tooltip.right="
                                                     fieldHelp.privacy
@@ -945,7 +942,7 @@ const sections = [
 ];
 
 // Progress tracking computed properties
-const totalFields = 8; // Required fields count
+const totalFields = 9; // Required fields that need user input (excluding those with defaults)
 
 // Use reactive values that will be passed from the Form component
 const currentFormValues = ref({});
@@ -962,7 +959,9 @@ const filledFields = computed(() => {
         form.complexity,
         form.requesterName,
         form.requesterEmail,
+        form.terms === true, // Terms checkbox must be checked
     ];
+    // Note: impact, reach, and privacy have default values so are not counted
     fields.forEach((field) => {
         if (field) filled++;
     });
@@ -1306,7 +1305,7 @@ function autoSaveDraft(values) {
             detail: "Your progress has been automatically saved",
             life: 2000,
         });
-    }, 2000);
+    }, 10000);
 }
 
 // Watch form values for changes
@@ -1507,7 +1506,7 @@ function clearForm() {
 
 /* Form Content Adjustments */
 .form-content {
-    padding-bottom: 100px; /* Space for sticky footer */
+    padding-bottom: 70px; /* Space for sticky footer */
     padding-top: 0; /* Remove any top padding */
 }
 
@@ -1538,7 +1537,7 @@ function clearForm() {
 }
 
 .footer-spacer {
-    height: 80px; /* Match simplified footer height */
+    height: 0px;
 }
 
 /* Dark theme adjustments */
@@ -1730,10 +1729,20 @@ function clearForm() {
     .footer-top-row > div:last-child {
         flex-direction: column;
         gap: 0.5rem;
+        width: 100%;
+    }
+
+    .footer-top-row > div:last-child > button,
+    .footer-top-row > div:last-child > span {
+        width: 100%;
+    }
+
+    .footer-top-row > div:last-child > span > button {
+        width: 100%;
     }
 
     .footer-spacer {
-        height: 140px; /* More height on mobile due to wrapping */
+        height: 140px;
     }
 }
 
