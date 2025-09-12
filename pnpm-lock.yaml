@@ -9,43 +9,43 @@ importers:
   .:
     dependencies:
       '@vee-validate/rules':
-        specifier: ^4.15.1
+        specifier: 4.15.1
         version: 4.15.1(vue@3.5.21(typescript@5.9.2))
       '@vueuse/core':
-        specifier: ^13.9.0
+        specifier: 13.9.0
         version: 13.9.0(vue@3.5.21(typescript@5.9.2))
       chart.js:
-        specifier: ^3.9.1
+        specifier: 3.9.1
         version: 3.9.1
       d3:
-        specifier: ^7.9.0
+        specifier: 7.9.0
         version: 7.9.0
       d3-cloud:
-        specifier: ^1.2.7
+        specifier: 1.2.7
         version: 1.2.7
       pinia:
-        specifier: ^2.1.6
+        specifier: 2.3.1
         version: 2.3.1(typescript@5.9.2)(vue@3.5.21(typescript@5.9.2))
       primeflex:
-        specifier: ^3.3.0
+        specifier: 3.3.1
         version: 3.3.1
       primeicons:
-        specifier: ^6.0.0
+        specifier: 6.0.1
         version: 6.0.1
       primevue:
-        specifier: ^3.0.0
+        specifier: 3.53.1
         version: 3.53.1(vue@3.5.21(typescript@5.9.2))
       uuid:
-        specifier: ^9.0.0
+        specifier: 9.0.1
         version: 9.0.1
       vee-validate:
-        specifier: ^4.15.1
+        specifier: 4.15.1
         version: 4.15.1(vue@3.5.21(typescript@5.9.2))
       vue:
-        specifier: ^3.4.0
+        specifier: 3.5.21
         version: 3.5.21(typescript@5.9.2)
       vue-router:
-        specifier: ^4.3.0
+        specifier: 4.5.1
         version: 4.5.1(vue@3.5.21(typescript@5.9.2))
     devDependencies:
       '@vitejs/plugin-vue':
