@@ -168,7 +168,7 @@
             <!-- Recent Ideas Table -->
             <div class="grid">
                 <div class="col-12">
-                    <Card>
+                    <Card class="recent-ideas-card">
                         <template #title>
                             <div
                                 class="flex align-items-center justify-content-between"
@@ -752,5 +752,48 @@ onUnmounted(() => {
     :deep(.p-card .p-card-content) {
         padding: 0.75rem;
     }
+}
+
+/* Recent Ideas Card - Full width table within card boundaries */
+.recent-ideas-card :deep(.p-card-body) {
+    padding-bottom: 0;
+}
+
+.recent-ideas-card :deep(.p-card-content) {
+    padding: 0;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    width: calc(100% + 2rem);
+}
+
+.recent-ideas-card :deep(.idea-table-container) {
+    padding: 0;
+}
+
+.recent-ideas-card :deep(.card) {
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+}
+
+.recent-ideas-card :deep(.p-datatable) {
+    border-radius: 0;
+}
+
+.recent-ideas-card :deep(.p-datatable-wrapper) {
+    border-radius: 0;
+}
+
+/* Add padding to first column to align with card heading */
+.recent-ideas-card :deep(.p-datatable thead th:first-child),
+.recent-ideas-card :deep(.p-datatable tbody td:first-child) {
+    padding-left: 1rem;
+}
+
+/* Add padding to last column for balance */
+.recent-ideas-card :deep(.p-datatable thead th:last-child),
+.recent-ideas-card :deep(.p-datatable tbody td:last-child) {
+    padding-right: 1rem;
 }
 </style>
