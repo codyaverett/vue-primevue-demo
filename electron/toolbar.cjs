@@ -330,10 +330,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     sidebarToggle.addEventListener('click', () => {
         sidebar.classList.toggle('hidden');
+        // Update the icon based on sidebar state
+        const svg = sidebarToggle.querySelector('svg path');
+        if (sidebar.classList.contains('hidden')) {
+            // Sidebar is hidden, show right arrow
+            svg.setAttribute('d', 'M3 14l10-7L3 0z');
+        } else {
+            // Sidebar is visible, show left arrow
+            svg.setAttribute('d', 'M13 14L3 7l10-7z');
+        }
     });
     
     toggleSidebarFloat.addEventListener('click', () => {
         sidebar.classList.remove('hidden');
+        // Update the sidebar toggle icon to show left arrow (panel is open)
+        const svg = sidebarToggle.querySelector('svg path');
+        svg.setAttribute('d', 'M13 14L3 7l10-7z');
     });
     
     urlInput.addEventListener('keypress', (e) => {

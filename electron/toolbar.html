@@ -281,6 +281,8 @@
             display: flex;
             flex-direction: column;
             transition: transform 0.3s ease;
+            height: 100%;
+            overflow: hidden;
         }
         
         .sidebar.hidden {
@@ -324,7 +326,9 @@
         .sidebar-content {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 16px;
+            height: 100%;
         }
         
         .commit-info {
@@ -558,7 +562,7 @@
                 <span class="sidebar-title">Commit Details</span>
                 <button class="sidebar-toggle" id="sidebarToggle">
                     <svg viewBox="0 0 16 16" width="16" height="16">
-                        <path d="M3 14l10-7L3 0z"/>
+                        <path d="M13 14L3 7l10-7z"/>
                     </svg>
                 </button>
             </div>
@@ -572,7 +576,7 @@
         <div class="webview-container">
             <button class="toggle-sidebar-float" id="toggleSidebarFloat">
                 <svg viewBox="0 0 16 16" width="16" height="16">
-                    <path d="M13 14L3 7l10-7z"/>
+                    <path d="M3 14l10-7L3 0z"/>
                 </svg>
             </button>
             <webview id="webview" src="http://localhost:5173" partition="persist:main"></webview>
