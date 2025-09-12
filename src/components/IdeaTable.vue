@@ -353,7 +353,7 @@
                 </TransitionGroup>
             </div>
             <!-- Pagination for grid view -->
-            <div class="pagination-wrapper">
+            <div v-if="!props.limit" class="pagination-wrapper">
                 <Paginator
                     v-if="totalRecords > rowsPerPage"
                     :rows="rowsPerPage"
@@ -382,6 +382,11 @@
                     {{ totalRecords }} ideas
                 </div>
             </div>
+            <!-- Simple count for limited views -->
+            <div v-else class="text-600 p-3 text-center">
+                Showing {{ Math.min(paginatedItems.length, totalRecords) }} most
+                recent ideas
+            </div>
         </div>
 
         <div v-else class="table-view-container">
@@ -389,14 +394,14 @@
                 :value="filtered"
                 :loading="store.loading"
                 data-key="id"
-                paginator
+                :paginator="!props.limit"
                 :rows="rowsPerPage"
                 :rows-per-page-options="[5, 10, 20, 50]"
                 class="p-datatable-sm full-height-table"
                 :paginator-template="'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown'"
                 :current-page-report-template="'Showing {first} to {last} of {totalRecords} ideas'"
                 scrollable
-                scroll-height="flex"
+                :scroll-height="props.limit ? 'auto' : 'flex'"
                 @page="onPageChange"
             >
                 <template #empty>
@@ -919,11 +924,13 @@ onBeforeUnmount(() => {
     flex-direction: column;
     height: 100%;
     overflow: hidden;
+    position: relative;
 }
 
 /* For dashboard view with limit */
 .idea-table-container.limited {
     height: auto;
+    overflow: visible;
 }
 
 .toolbar-header {
@@ -936,22 +943,51 @@ onBeforeUnmount(() => {
 .grid-view-container {
     display: flex;
     flex-direction: column;
-    flex: 1;
-    min-height: 0;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
 }
 
-.scrollable-content {
+/* Scrollable content for Ideas page */
+.idea-table-container:not(.limited) .scrollable-content {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+    padding-bottom: 70px; /* Space for fixed paginator + spacing */
+    min-height: 0;
+}
+
+/* Auto height for Dashboard */
+.idea-table-container.limited .scrollable-content {
+    height: auto;
+    overflow: visible;
     padding-bottom: 1rem;
 }
 
-.pagination-wrapper {
+/* Auto height for limited grid view */
+.idea-table-container.limited .grid-view-container {
+    height: auto;
+}
+
+.idea-table-container:not(.limited) .pagination-wrapper {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
     border-top: 1px solid var(--surface-border);
     padding: 1rem;
     background: var(--surface-card);
-    margin-top: auto;
+    margin: 0;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Normal position for limited view */
+.idea-table-container.limited .pagination-wrapper {
+    position: relative;
+    border-top: 1px solid var(--surface-border);
+    padding: 1rem;
+    background: var(--surface-card);
 }
 
 /* Table view container */
@@ -960,23 +996,56 @@ onBeforeUnmount(() => {
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    position: relative;
+    overflow: hidden;
 }
 
-.full-height-table {
-    flex: 1;
+/* Full height table for Ideas page */
+.idea-table-container:not(.limited) .full-height-table {
     display: flex;
     flex-direction: column;
+    height: 100%;
+    position: relative;
 }
 
-/* Make DataTable fill container */
-.full-height-table :deep(.p-datatable-wrapper) {
+/* Limited height table for Dashboard */
+.idea-table-container.limited .full-height-table {
+    height: auto;
+}
+
+/* Make DataTable wrapper scrollable for Ideas page */
+.idea-table-container:not(.limited)
+    .full-height-table
+    :deep(.p-datatable-wrapper) {
     flex: 1;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: auto;
+    min-height: 0;
+    padding-bottom: 60px; /* Space for fixed paginator */
 }
 
-.full-height-table :deep(.p-paginator) {
-    margin-top: auto;
+/* Auto height for Dashboard */
+.idea-table-container.limited .full-height-table :deep(.p-datatable-wrapper) {
+    height: auto;
+    overflow: visible;
+}
+
+/* Fixed paginator at bottom for Ideas page */
+.idea-table-container:not(.limited) .full-height-table :deep(.p-paginator) {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--surface-card);
     border-top: 1px solid var(--surface-border);
+    margin: 0;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Hide paginator for Dashboard */
+.idea-table-container.limited .full-height-table :deep(.p-paginator) {
+    display: none;
 }
 
 /* Mobile toolbar - hidden on desktop */
