@@ -5,6 +5,7 @@
             :initial-category-filter="categoryFilter"
             :initial-date-filter="dateFilter"
             :initial-status-filter="statusFilter"
+            :initial-date-range-filter="dateRangeFilter"
         />
     </div>
 </template>
@@ -23,6 +24,17 @@ const categoryFilter = computed(() => route.query.category || null);
 
 // Get date filter from query param
 const dateFilter = computed(() => route.query.date || null);
+
+// Get date range filter from query params
+const dateRangeFilter = computed(() => {
+    if (route.query.dateFrom && route.query.dateTo) {
+        return {
+            from: new Date(route.query.dateFrom),
+            to: new Date(route.query.dateTo),
+        };
+    }
+    return null;
+});
 
 // Get status filter from query param
 const statusFilter = computed(() => route.query.status || null);

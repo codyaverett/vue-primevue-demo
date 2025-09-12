@@ -171,26 +171,6 @@
                         />
                     </div>
 
-                    <!-- Sort Dropdown -->
-                    <Dropdown
-                        v-model="selectedSort"
-                        :options="sortOptions"
-                        option-label="label"
-                        placeholder="Sort by"
-                        class="w-11rem"
-                    >
-                        <template #value="slotProps">
-                            <div
-                                v-if="slotProps.value"
-                                class="flex align-items-center gap-1"
-                            >
-                                <i class="pi pi-sort-amount-down text-xs" />
-                                <span>{{ slotProps.value.label }}</span>
-                            </div>
-                            <span v-else>{{ slotProps.placeholder }}</span>
-                        </template>
-                    </Dropdown>
-
                     <!-- Action buttons -->
                     <div class="action-buttons ml-auto">
                         <Button
@@ -261,13 +241,6 @@
                         date-format="mm/dd/yy"
                         :show-clear="true"
                         :show-button-bar="true"
-                        class="w-full"
-                    />
-                    <Dropdown
-                        v-model="selectedSort"
-                        :options="sortOptions"
-                        option-label="label"
-                        placeholder="Sort by"
                         class="w-full"
                     />
                 </div>
@@ -527,7 +500,6 @@ import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import Tag from "primevue/tag";
 import Toolbar from "primevue/toolbar";
-import Dropdown from "primevue/dropdown";
 import MultiSelect from "primevue/multiselect";
 import Paginator from "primevue/paginator";
 import Calendar from "primevue/calendar";
@@ -556,6 +528,10 @@ const props = defineProps({
         type: String,
         default: null,
     },
+    initialDateRangeFilter: {
+        type: Object,
+        default: null,
+    },
 });
 
 const store = useIdeasStore();
@@ -571,8 +547,8 @@ const search = ref("");
 const filters = ref({ status: [], category: [], tags: [], dateRange: null });
 const grid = ref(false);
 const votingId = ref(null);
-const sortField = ref("votes");
-const sortOrder = ref(-1);
+const sortField = ref(null);
+const sortOrder = ref(1);
 const currentPage = ref(0);
 const rowsPerPage = ref(10);
 const mobileMenuOpen = ref(false);
@@ -792,6 +768,25 @@ watch(
     },
     { immediate: true }
 );
+
+// Handle initial date range filter from props (from dashboard brush)
+watch(
+    () => props.initialDateRangeFilter,
+    (newDateRange) => {
+        if (newDateRange) {
+            filters.value.dateRange = [newDateRange.from, newDateRange.to];
+
+            // Clear other filters
+            if (!props.initialTagFilter) filters.value.tags = [];
+            if (!props.initialCategoryFilter) filters.value.category = [];
+            if (!props.initialStatusFilter) filters.value.status = [];
+        } else if (!newDateRange && !props.initialDateFilter) {
+            filters.value.dateRange = null;
+        }
+    },
+    { immediate: true }
+);
+
 function statusSeverity(s) {
     return s === "Implemented"
         ? "success"
@@ -865,32 +860,6 @@ function onPageChange(event) {
     rowsPerPage.value = event.rows;
 }
 
-// Sorting options for dropdown
-const sortOptions = [
-    { label: "Most Voted", value: "votes", order: -1 },
-    { label: "Least Voted", value: "votes", order: 1 },
-    { label: "Title (A-Z)", value: "title", order: 1 },
-    { label: "Title (Z-A)", value: "title", order: -1 },
-    { label: "Newest First", value: "createdAt", order: -1 },
-    { label: "Oldest First", value: "createdAt", order: 1 },
-    { label: "Status", value: "status", order: 1 },
-    { label: "Category", value: "category", order: 1 },
-];
-
-const selectedSort = computed({
-    get() {
-        return sortOptions.find(
-            (opt) =>
-                opt.value === sortField.value && opt.order === sortOrder.value
-        );
-    },
-    set(val) {
-        if (val) {
-            sortField.value = val.value;
-            sortOrder.value = val.order;
-        }
-    },
-});
 // Close mobile menu when clicking outside
 onClickOutside(toolbarRef, () => {
     mobileMenuOpen.value = false;

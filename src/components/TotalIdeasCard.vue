@@ -6,13 +6,17 @@
             <!-- Left section: Total Ideas -->
             <div class="flex align-items-center justify-content-center gap-2">
                 <div class="text-center">
-                    <div class="text-xs text-500 mb-1">Total Ideas</div>
+                    <div class="text-xs text-500 mb-1">
+                        {{
+                            props.isFiltered ? "Selected Ideas" : "Total Ideas"
+                        }}
+                    </div>
                     <div class="text-3xl font-bold text-primary">
                         {{ totalIdeas }}
                     </div>
-                    <!-- Growth indicator -->
+                    <!-- Growth indicator (only show when not filtered) -->
                     <div
-                        v-if="weeklyGrowth"
+                        v-if="weeklyGrowth && !props.isFiltered"
                         class="growth-indicator mt-1 text-xs text-500"
                     >
                         <i class="pi pi-arrow-up text-green-500 text-xs mr-1" />
@@ -35,9 +39,11 @@
                     @click="$emit('status-click', status)"
                 >
                     <span class="status-dot" :class="getDotClass(status)" />
-                    <span class="status-name text-xs">{{
-                        getShortStatus(status)
-                    }}</span>
+                    <span
+                        class="status-name text-xs"
+                        :title="getStatusDescription(status)"
+                        >{{ getShortStatus(status) }}</span
+                    >
                     <span class="status-count text-xs font-semibold ml-auto">{{
                         count
                     }}</span>
@@ -62,6 +68,10 @@ const props = defineProps({
     weeklyGrowth: {
         type: Number,
         default: 0,
+    },
+    isFiltered: {
+        type: Boolean,
+        default: false,
     },
 });
 
@@ -109,6 +119,16 @@ const getDotClass = (status) => {
         Archived: "dot-archived",
     };
     return classes[status] || "dot-active";
+};
+
+const getStatusDescription = (status) => {
+    const descriptions = {
+        Active: "New ideas awaiting review or action",
+        "Under Review": "Ideas being evaluated for implementation",
+        Implemented: "Completed and deployed ideas",
+        Archived: "Ideas no longer being considered",
+    };
+    return descriptions[status] || status;
 };
 </script>
 
