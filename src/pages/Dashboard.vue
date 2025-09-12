@@ -14,7 +14,7 @@
                         label="View All Ideas"
                         icon="pi pi-list"
                         class="p-button-secondary"
-                        @click="router.push('/ideas')"
+                        @click="navigateToIdeas()"
                     />
                     <Button
                         label="Export Data"
@@ -46,6 +46,7 @@
                         :total-ideas="totalIdeas"
                         :status-distribution="statusDistribution"
                         :weekly-growth="weeklyGrowth"
+                        :is-filtered="!!brushSelection"
                         @status-click="handleStatusClick"
                     />
                 </div>
@@ -73,7 +74,16 @@
                                 <div
                                     class="flex align-items-center justify-content-between"
                                 >
-                                    <span>Ideas Trend</span>
+                                    <div class="flex align-items-center gap-2">
+                                        <span>Ideas Trend</span>
+                                        <Button
+                                            v-if="brushSelection"
+                                            label="Clear Filter"
+                                            icon="pi pi-filter-slash"
+                                            class="p-button-danger p-button-sm"
+                                            @click="clearFilter"
+                                        />
+                                    </div>
                                     <SelectButton
                                         v-model="chartTimeRange"
                                         :options="timeRangeOptions"
@@ -86,15 +96,18 @@
                             <template #content>
                                 <TrendChart
                                     ref="trendChartRef"
+                                    :data="trendData"
                                     :time-range="chartTimeRange"
                                     :height="chartHeight"
+                                    @date-click="handleTrendDateClick"
+                                    @brush-select="handleBrushSelect"
                                 />
                             </template>
                         </Card>
                     </div>
 
-                    <!-- Category Distribution - Square tile -->
-                    <div class="mosaic-tile">
+                    <!-- Category Distribution - Half width on desktop -->
+                    <div class="mosaic-tile mosaic-tile-category">
                         <Card class="h-full">
                             <template #title> Category Distribution </template>
                             <template #content>
@@ -108,7 +121,7 @@
                         </Card>
                     </div>
 
-                    <!-- Tag Cloud - Half width on large screens -->
+                    <!-- Tag Cloud - Half width on desktop -->
                     <div class="mosaic-tile mosaic-tile-tags">
                         <Card class="h-full">
                             <template #title>
@@ -178,7 +191,7 @@
                                     label="View All"
                                     icon="pi pi-arrow-right"
                                     class="p-button-text p-button-sm"
-                                    @click="router.push('/ideas')"
+                                    @click="navigateToIdeas()"
                                 />
                             </div>
                         </template>
@@ -194,7 +207,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useIdeasStore } from "../stores/ideas";
 import { resetToSeed } from "../services/api";
 
@@ -213,6 +226,7 @@ import Card from "primevue/card";
 import SelectButton from "primevue/selectbutton";
 
 const router = useRouter();
+const route = useRoute();
 const store = useIdeasStore();
 
 // Chart component refs
@@ -224,6 +238,7 @@ const calendarHeatmapRef = ref(null);
 // Chart controls
 const chartTimeRange = ref("7d");
 const currentYear = ref(new Date().getFullYear());
+const brushSelection = ref(null);
 
 // Responsive chart height
 const chartHeight = computed(() => {
@@ -237,17 +252,37 @@ const timeRangeOptions = [
     { label: "7 Days", value: "7d" },
     { label: "30 Days", value: "30d" },
     { label: "90 Days", value: "90d" },
+    { label: "180 Days", value: "180d" },
+    { label: "All Time", value: "all" },
 ];
 
-// Computed KPI metrics
-const totalIdeas = computed(() => store.items.length);
+// Filter items based on brush selection
+const filteredItems = computed(() => {
+    if (!brushSelection.value) {
+        return store.items;
+    }
+
+    const { start, end } = brushSelection.value;
+    return store.items.filter((idea) => {
+        if (!idea.createdAt) return false;
+        const ideaDate = new Date(idea.createdAt);
+        return ideaDate >= start && ideaDate <= end;
+    });
+});
+
+// Computed KPI metrics (now using filtered items)
+const totalIdeas = computed(() => filteredItems.value.length);
 
 const activeIdeas = computed(() => {
-    return store.items.filter((item) => item.status === "Active").length;
+    return filteredItems.value.filter((item) => item.status === "Active")
+        .length;
 });
 
 const totalVotes = computed(() => {
-    return store.items.reduce((sum, idea) => sum + (idea.votes || 0), 0);
+    return filteredItems.value.reduce(
+        (sum, idea) => sum + (idea.votes || 0),
+        0
+    );
 });
 
 const avgVotes = computed(() => {
@@ -261,10 +296,10 @@ const activePercentage = computed(() => {
 });
 
 const topVotedIdea = computed(() => {
-    if (store.items.length === 0) return null;
-    return store.items.reduce(
+    if (filteredItems.value.length === 0) return null;
+    return filteredItems.value.reduce(
         (max, idea) => ((idea.votes || 0) > (max?.votes || 0) ? idea : max),
-        store.items[0]
+        filteredItems.value[0]
     );
 });
 
@@ -273,14 +308,14 @@ const topVotedVotes = computed(() => topVotedIdea.value?.votes || 0);
 
 const statusDistribution = computed(() => {
     const distribution = {};
-    store.items.forEach((item) => {
+    filteredItems.value.forEach((item) => {
         distribution[item.status] = (distribution[item.status] || 0) + 1;
     });
     return distribution;
 });
 
 const categoryData = computed(() => {
-    const categoryMap = store.items.reduce((acc, idea) => {
+    const categoryMap = filteredItems.value.reduce((acc, idea) => {
         const category = idea.category || "Other";
         acc[category] = (acc[category] || 0) + 1;
         return acc;
@@ -295,8 +330,8 @@ const categoryData = computed(() => {
 const tagCloudData = computed(() => {
     const tagMap = {};
 
-    // Process all tags from all ideas
-    store.items.forEach((idea) => {
+    // Process all tags from filtered ideas
+    filteredItems.value.forEach((idea) => {
         if (idea.tags && Array.isArray(idea.tags)) {
             idea.tags.forEach((tag) => {
                 tagMap[tag] = (tagMap[tag] || 0) + 1;
@@ -314,6 +349,269 @@ const tagCloudData = computed(() => {
 const weeklyGrowth = computed(() => {
     // Simulate weekly growth for demo
     return Math.floor(Math.random() * 20 + 5);
+});
+
+// Generate trend data for the trend chart from actual idea data
+const trendData = computed(() => {
+    const trendMap = new Map();
+    const now = new Date();
+
+    // Handle "All Time" option by finding the earliest idea date
+    let startDate,
+        days,
+        aggregateByWeek = false,
+        aggregateByMonth = false;
+    if (chartTimeRange.value === "all") {
+        // Find the earliest idea date
+        const earliestIdea = store.items.reduce((earliest, idea) => {
+            if (!idea.createdAt) return earliest;
+            const ideaDate = new Date(idea.createdAt);
+            return !earliest || ideaDate < earliest ? ideaDate : earliest;
+        }, null);
+
+        if (earliestIdea) {
+            startDate = new Date(earliestIdea);
+            startDate.setHours(0, 0, 0, 0);
+            days = Math.ceil((now - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+            // Decide on aggregation strategy based on date range
+            if (days > 365) {
+                aggregateByMonth = true;
+            } else if (days > 90) {
+                aggregateByWeek = true;
+            }
+        } else {
+            // No ideas, default to 30 days
+            days = 30;
+            startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - days + 1);
+        }
+    } else {
+        // Fixed time ranges
+        days =
+            chartTimeRange.value === "7d"
+                ? 7
+                : chartTimeRange.value === "30d"
+                  ? 30
+                  : chartTimeRange.value === "90d"
+                    ? 90
+                    : 180;
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - days + 1);
+
+        // Use weekly aggregation for 90-day view
+        if (chartTimeRange.value === "90d") {
+            aggregateByWeek = true;
+        }
+    }
+
+    // Helper function to get period key for aggregation
+    const getPeriodKey = (date) => {
+        if (aggregateByMonth) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
+        } else if (aggregateByWeek) {
+            // Get the Monday of the week
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Sunday
+            d.setDate(diff);
+            return d.toISOString().split("T")[0];
+        } else {
+            return date.toISOString().split("T")[0];
+        }
+    };
+
+    // Initialize data structure based on aggregation level
+    if (aggregateByMonth) {
+        // Create monthly buckets
+        const currentDate = new Date(startDate);
+        while (currentDate <= now) {
+            const monthKey = getPeriodKey(currentDate);
+            if (!trendMap.has(monthKey)) {
+                const monthDate = new Date(
+                    currentDate.getFullYear(),
+                    currentDate.getMonth(),
+                    1
+                );
+                trendMap.set(monthKey, {
+                    date: monthDate,
+                    created: 0,
+                    votes: 0,
+                    active: 0,
+                    implemented: 0,
+                    underReview: 0,
+                    categories: {
+                        UI: 0,
+                        Platform: 0,
+                        Performance: 0,
+                        Integrations: 0,
+                        Security: 0,
+                    },
+                    ideas: [],
+                    topIdea: null,
+                    period: "month",
+                });
+            }
+            currentDate.setMonth(currentDate.getMonth() + 1);
+        }
+    } else if (aggregateByWeek) {
+        // Create weekly buckets
+        const currentDate = new Date(startDate);
+        while (currentDate <= now) {
+            const weekKey = getPeriodKey(currentDate);
+            if (!trendMap.has(weekKey)) {
+                trendMap.set(weekKey, {
+                    date: new Date(weekKey),
+                    created: 0,
+                    votes: 0,
+                    active: 0,
+                    implemented: 0,
+                    underReview: 0,
+                    categories: {
+                        UI: 0,
+                        Platform: 0,
+                        Performance: 0,
+                        Integrations: 0,
+                        Security: 0,
+                    },
+                    ideas: [],
+                    topIdea: null,
+                    period: "week",
+                });
+            }
+            currentDate.setDate(currentDate.getDate() + 7);
+        }
+    } else {
+        // Daily buckets for shorter ranges
+        for (let i = 0; i < days; i++) {
+            const date = new Date(startDate);
+            date.setDate(date.getDate() + i);
+            date.setHours(0, 0, 0, 0);
+            const dateStr = date.toISOString().split("T")[0];
+            trendMap.set(dateStr, {
+                date: new Date(date),
+                created: 0,
+                votes: 0,
+                active: 0,
+                implemented: 0,
+                underReview: 0,
+                categories: {
+                    UI: 0,
+                    Platform: 0,
+                    Performance: 0,
+                    Integrations: 0,
+                    Security: 0,
+                },
+                ideas: [],
+                topIdea: null,
+                period: "day",
+            });
+        }
+    }
+
+    // Process ideas within the time range
+    store.items.forEach((idea) => {
+        if (idea.createdAt) {
+            const ideaDate = new Date(idea.createdAt);
+            const periodKey = getPeriodKey(ideaDate);
+
+            // Check if the idea is within our time range
+            const periodData = trendMap.get(periodKey);
+            if (periodData) {
+                // Count created ideas
+                periodData.created += 1;
+
+                // Sum votes
+                periodData.votes += idea.votes || 0;
+
+                // Count by status
+                if (idea.status === "Active") periodData.active += 1;
+                else if (idea.status === "Implemented")
+                    periodData.implemented += 1;
+                else if (idea.status === "Under Review")
+                    periodData.underReview += 1;
+
+                // Count by category
+                if (
+                    idea.category &&
+                    periodData.categories[idea.category] !== undefined
+                ) {
+                    periodData.categories[idea.category] += 1;
+                }
+
+                // Track ideas for this period
+                periodData.ideas.push({
+                    id: idea.id,
+                    title: idea.title,
+                    votes: idea.votes || 0,
+                    status: idea.status,
+                    category: idea.category,
+                });
+
+                // Update top idea for the period
+                if (
+                    !periodData.topIdea ||
+                    (idea.votes || 0) > periodData.topIdea.votes
+                ) {
+                    periodData.topIdea = {
+                        title: idea.title,
+                        votes: idea.votes || 0,
+                    };
+                }
+            }
+        }
+    });
+
+    // Calculate moving averages and cumulative totals
+    const dataArray = Array.from(trendMap.values()).sort(
+        (a, b) => a.date - b.date
+    );
+    let cumulativeTotal = 0;
+
+    dataArray.forEach((day, index) => {
+        // Add cumulative total
+        cumulativeTotal += day.created;
+        day.cumulative = cumulativeTotal;
+
+        // Calculate 7-day moving average (if we have enough data)
+        if (index >= 6) {
+            const last7Days = dataArray.slice(index - 6, index + 1);
+            day.movingAvg =
+                last7Days.reduce((sum, d) => sum + d.created, 0) / 7;
+        } else {
+            day.movingAvg = day.created; // Use actual value if not enough history
+        }
+    });
+
+    // Include all days to show complete timeline
+    let consolidatedArray = dataArray;
+
+    // If we have no data points at all, return a minimal dataset
+    if (consolidatedArray.length === 0) {
+        return [
+            {
+                date: new Date(),
+                created: 0,
+                votes: 0,
+                active: 0,
+                implemented: 0,
+                underReview: 0,
+                categories: {
+                    UI: 0,
+                    Platform: 0,
+                    Performance: 0,
+                    Integrations: 0,
+                    Security: 0,
+                },
+                ideas: [],
+                topIdea: null,
+                cumulative: 0,
+                movingAvg: 0,
+            },
+        ];
+    }
+
+    return consolidatedArray;
 });
 
 // Generate activity data for calendar heatmap from actual idea data
@@ -381,33 +679,103 @@ const resetData = async () => {
 
 const handleTagClick = (tag) => {
     // Navigate to ideas page with tag filter
+    const query = { tag: tag.text };
+    if (brushSelection.value) {
+        query.dateFrom = brushSelection.value.start.toISOString();
+        query.dateTo = brushSelection.value.end.toISOString();
+    }
     router.push({
         path: "/ideas",
-        query: { tag: tag.text },
+        query,
     });
 };
 
 const handleCategoryClick = (categoryData) => {
     // Navigate to ideas page with category filter
+    const query = { category: categoryData.category };
+    if (brushSelection.value) {
+        query.dateFrom = brushSelection.value.start.toISOString();
+        query.dateTo = brushSelection.value.end.toISOString();
+    }
     router.push({
         path: "/ideas",
-        query: { category: categoryData.category },
+        query,
     });
 };
 
 const handleDateClick = (dateData) => {
     // Navigate to ideas page with date filter
+    const query = { date: dateData.dateStr };
+    if (brushSelection.value) {
+        query.dateFrom = brushSelection.value.start.toISOString();
+        query.dateTo = brushSelection.value.end.toISOString();
+    }
     router.push({
         path: "/ideas",
-        query: { date: dateData.dateStr },
+        query,
     });
 };
 
 const handleStatusClick = (status) => {
     // Navigate to ideas page with status filter
+    const query = { status: status };
+    if (brushSelection.value) {
+        query.dateFrom = brushSelection.value.start.toISOString();
+        query.dateTo = brushSelection.value.end.toISOString();
+    }
     router.push({
         path: "/ideas",
-        query: { status: status },
+        query,
+    });
+};
+
+const handleTrendDateClick = (event) => {
+    // Navigate to ideas page with date filter from the clicked chart point
+    const dateStr = event.date.toISOString().split("T")[0];
+    const query = { date: dateStr };
+    if (brushSelection.value) {
+        query.dateFrom = brushSelection.value.start.toISOString();
+        query.dateTo = brushSelection.value.end.toISOString();
+    }
+    router.push({
+        path: "/ideas",
+        query,
+    });
+};
+
+const handleBrushSelect = (selection) => {
+    brushSelection.value = selection;
+    updateQueryParams();
+};
+
+const clearFilter = () => {
+    brushSelection.value = null;
+    updateQueryParams();
+};
+
+const updateQueryParams = () => {
+    const query = { ...route.query };
+
+    if (brushSelection.value) {
+        query.dateFrom = brushSelection.value.start.toISOString();
+        query.dateTo = brushSelection.value.end.toISOString();
+    } else {
+        delete query.dateFrom;
+        delete query.dateTo;
+    }
+
+    router.replace({ query });
+};
+
+const navigateToIdeas = () => {
+    const query = {};
+    if (brushSelection.value) {
+        query.dateFrom = brushSelection.value.start.toISOString();
+        query.dateTo = brushSelection.value.end.toISOString();
+    }
+    router.push({
+        path: "/ideas",
+        query,
     });
 };
 
@@ -445,6 +813,14 @@ onMounted(async () => {
     console.log("Dashboard mounted, loading data...");
     await store.refresh();
     console.log("Loaded", store.items.length, "ideas");
+
+    // Check for date range in query params
+    if (route.query.dateFrom && route.query.dateTo) {
+        brushSelection.value = {
+            start: new Date(route.query.dateFrom),
+            end: new Date(route.query.dateTo),
+        };
+    }
 
     // Add window resize listener
     window.addEventListener("resize", handleWindowResize);
@@ -543,6 +919,10 @@ onUnmounted(() => {
 }
 
 .mosaic-tile-wide {
+    grid-column: span 4;
+}
+
+.mosaic-tile-category {
     grid-column: span 2;
 }
 
@@ -553,14 +933,18 @@ onUnmounted(() => {
 /* Large screens: 4-column grid */
 @media (min-width: 1600px) {
     .mosaic-tile-calendar {
-        grid-column: span 2;
+        grid-column: span 4;
     }
 }
 
-/* Medium-large screens: 3-column grid */
+/* Medium-large screens: 4-column grid */
 @media (max-width: 1599px) {
     .mosaic-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .mosaic-tile-category {
+        grid-column: span 2;
     }
 
     .mosaic-tile-tags {
@@ -568,7 +952,7 @@ onUnmounted(() => {
     }
 
     .mosaic-tile-calendar {
-        grid-column: span 3;
+        grid-column: span 4;
     }
 }
 
@@ -635,8 +1019,12 @@ onUnmounted(() => {
         grid-column: span 2;
     }
 
+    .mosaic-tile-category {
+        grid-column: span 1;
+    }
+
     .mosaic-tile-tags {
-        grid-column: span 2;
+        grid-column: span 1;
     }
 
     .mosaic-tile-calendar {
@@ -668,6 +1056,7 @@ onUnmounted(() => {
 
     .mosaic-tile,
     .mosaic-tile-wide,
+    .mosaic-tile-category,
     .mosaic-tile-tags,
     .mosaic-tile-calendar {
         grid-column: span 1;
