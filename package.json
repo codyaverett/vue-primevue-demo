@@ -16,19 +16,19 @@
         "review:dev": "concurrently \"pnpm run dev\" \"wait-on http://localhost:5173 && pnpx electron electron/main.cjs\""
     },
     "dependencies": {
-        "@vee-validate/rules": "^4.15.1",
-        "@vueuse/core": "^13.9.0",
-        "chart.js": "^3.9.1",
-        "d3": "^7.9.0",
-        "d3-cloud": "^1.2.7",
-        "pinia": "^2.1.6",
-        "primeflex": "^3.3.0",
-        "primeicons": "^6.0.0",
-        "primevue": "^3.0.0",
-        "uuid": "^9.0.0",
-        "vee-validate": "^4.15.1",
-        "vue": "^3.4.0",
-        "vue-router": "^4.3.0"
+        "@vee-validate/rules": "4.15.1",
+        "@vueuse/core": "13.9.0",
+        "chart.js": "3.9.1",
+        "d3": "7.9.0",
+        "d3-cloud": "1.2.7",
+        "pinia": "2.3.1",
+        "primeflex": "3.3.1",
+        "primeicons": "6.0.1",
+        "primevue": "3.53.1",
+        "uuid": "9.0.1",
+        "vee-validate": "4.15.1",
+        "vue": "3.5.21",
+        "vue-router": "4.5.1"
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "5.2.4",
