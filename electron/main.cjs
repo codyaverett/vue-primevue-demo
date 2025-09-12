@@ -49,10 +49,16 @@ async function getCurrentBranch() {
 
 async function checkoutBranch(branchName) {
     try {
+        // Stash any changes before switching
+        await execAsync('git stash push -m "temp stash for branch switch"').catch(() => {});
         await execAsync(`git checkout ${branchName}`);
+        // Try to pop the stash back
+        await execAsync('git stash pop').catch(() => {});
         return { success: true };
     } catch (error) {
         console.error('Error checking out branch:', error);
+        // Try to restore stash if checkout failed
+        await execAsync('git stash pop').catch(() => {});
         return { success: false, error: error.message };
     }
 }
@@ -112,10 +118,16 @@ async function getCommitDetails(hash) {
 
 async function checkoutCommit(hash) {
     try {
+        // Stash any changes before switching
+        await execAsync('git stash push -m "temp stash for commit switch"').catch(() => {});
         await execAsync(`git checkout ${hash}`);
+        // Try to pop the stash back
+        await execAsync('git stash pop').catch(() => {});
         return { success: true };
     } catch (error) {
         console.error('Error checking out commit:', error);
+        // Try to restore stash if checkout failed
+        await execAsync('git stash pop').catch(() => {});
         return { success: false, error: error.message };
     }
 }
