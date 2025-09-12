@@ -274,8 +274,17 @@ if [ "$COMMAND" = "create" ]; then
         fi
     fi
     
-    # Generate PR title from the latest commit
-    PR_TITLE=$(git log -1 --pretty=format:"%s")
+    # Generate PR title from branch name
+    # Convert branch name to human-readable title
+    # e.g., feat/paginator-ux -> feat: paginator ux -> Feat: Paginator Ux
+    # e.g., fix/bug-123 -> fix: bug 123 -> Fix: Bug 123
+    # e.g., feature/add-new-component -> feature: add new component -> Feature: Add New Component
+    
+    # First, replace / with : and - with spaces
+    PR_TITLE=$(echo "$CURRENT_BRANCH" | sed 's|/|: |' | sed 's/-/ /g')
+    
+    # Then capitalize each word using awk
+    PR_TITLE=$(echo "$PR_TITLE" | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr($i,1,1)),$i)}1')
     
     # Generate PR body
     echo -e "${GREEN}Generating PR description from commits not in main branch...${NC}"
