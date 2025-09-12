@@ -50,7 +50,6 @@ onMounted(() => {
 /* Only apply full-height layout to Ideas page */
 .main-content > .ideas-page {
     position: absolute;
-    top: 60px; /* Header height */
     left: 0;
     right: 0;
     bottom: 0;

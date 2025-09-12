@@ -6,64 +6,7 @@
         :initial-values="formInitialValues"
         @submit="onSubmit"
     >
-        {{ watchFormValues(values) }}
-
-        <!-- Progress Tracker -->
-        <div ref="progressWrapperRef" class="progress-wrapper">
-            <div
-                ref="progressTrackerRef"
-                class="progress-container"
-                :class="{ 'is-sticky': isProgressSticky }"
-            >
-                <ProgressBar :value="formProgress" :show-value="false" />
-                <div
-                    class="progress-info flex justify-content-between align-items-center mt-2 gap-3"
-                >
-                    <div class="text-sm white-space-nowrap">
-                        <span class="font-semibold text-primary"
-                            >{{ formProgress }}%</span
-                        >
-                        <span class="text-600 ml-1 hidden sm:inline"
-                            >Complete</span
-                        >
-                    </div>
-                    <div
-                        class="flex gap-1 flex-wrap justify-content-center flex-grow-1"
-                    >
-                        <Tag
-                            v-for="section in sectionProgress"
-                            :key="section.name"
-                            :severity="
-                                section.complete ? 'success' : 'secondary'
-                            "
-                            :icon="section.complete ? 'pi pi-check' : null"
-                            :style="
-                                !section.complete
-                                    ? {
-                                          borderColor: section.color,
-                                          color: section.color,
-                                      }
-                                    : {}
-                            "
-                            class="text-xs cursor-pointer section-tag"
-                            @click="scrollToSection(section.id)"
-                        >
-                            {{ section.name }}
-                        </Tag>
-                    </div>
-                    <div class="text-sm text-600 white-space-nowrap">
-                        <span class="hidden sm:inline"
-                            >{{ filledFields }} of {{ totalFields }} required
-                            fields</span
-                        >
-                        <span class="inline sm:hidden"
-                            >{{ filledFields }}/{{ totalFields }}</span
-                        >
-                    </div>
-                </div>
-            </div>
-        </div>
-
+        <span style="display: none">{{ watchFormValues(values) }}</span>
         <!-- Main Form Content -->
         <div class="form-content">
             <div class="surface-card p-3 border-round shadow-1">
@@ -396,7 +339,6 @@
                                     >
                                         <label class="block mb-2"
                                             >Impact Score
-                                            <span class="text-red-500">*</span>
                                             <i
                                                 v-tooltip.right="
                                                     fieldHelp.impact
@@ -445,7 +387,6 @@
                                     >
                                         <label class="block mb-2"
                                             >Expected Reach
-                                            <span class="text-red-500">*</span>
                                             <i
                                                 v-tooltip.right="
                                                     fieldHelp.reach
@@ -645,7 +586,6 @@
                                     >
                                         <label class="block mb-2"
                                             >Privacy Setting
-                                            <span class="text-red-500">*</span>
                                             <i
                                                 v-tooltip.right="
                                                     fieldHelp.privacy
@@ -886,60 +826,60 @@
         <!-- Sticky Footer with Form Actions -->
         <div id="form-actions" class="sticky-footer">
             <div class="sticky-footer-content">
-                <div class="flex align-items-center gap-3">
-                    <div class="text-600 text-sm">
-                        <span class="text-red-500">*</span> Required fields
-                    </div>
-                    <div v-if="autoSaveStatus" class="text-sm">
-                        <span
-                            v-if="autoSaveStatus === 'saving'"
-                            class="text-blue-500"
-                        >
-                            <i class="pi pi-spin pi-spinner mr-1" />
-                            Saving draft...
-                        </span>
-                        <span
-                            v-else-if="autoSaveStatus === 'saved'"
-                            class="text-green-500"
-                        >
-                            <i class="pi pi-check mr-1" />
-                            Draft saved
-                        </span>
-                    </div>
-                    <div class="progress-summary text-sm text-600">
-                        <strong>{{ formProgress }}%</strong> complete
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <Button
-                        label="Clear Form"
-                        icon="pi pi-times"
-                        severity="secondary"
-                        type="button"
-                        @click="clearForm"
-                    />
-                    <Button
-                        label="Save Draft"
-                        icon="pi pi-save"
-                        severity="info"
-                        type="button"
-                        :disabled="!meta.dirty"
-                        @click="() => saveDraft(values)"
-                    />
-                    <span
-                        v-tooltip.top="
-                            !meta.valid ? getMissingFieldsMessage(values) : ''
-                        "
-                        class="inline-block"
-                    >
-                        <Button
-                            label="Submit Idea"
-                            icon="pi pi-check"
-                            type="submit"
-                            :loading="isSubmitting"
-                            :disabled="!meta.valid || isSubmitting"
+                <div class="footer-top-row">
+                    <!-- Progress Bar with text inside -->
+                    <div class="progress-bar-wrapper">
+                        <ProgressBar
+                            :value="formProgress"
+                            :show-value="false"
+                            class="custom-progress-bar"
                         />
-                    </span>
+                        <div class="progress-text-overlay">
+                            <span class="font-semibold"
+                                >{{ formProgress }}% complete</span
+                            >
+                            <span class="mx-2">•</span>
+                            <span
+                                >{{ filledFields }} of
+                                {{ totalFields }} fields</span
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="flex gap-2">
+                        <Button
+                            label="Clear Form"
+                            icon="pi pi-times"
+                            severity="secondary"
+                            type="button"
+                            @click="clearForm"
+                        />
+                        <Button
+                            label="Save Draft"
+                            icon="pi pi-save"
+                            severity="info"
+                            type="button"
+                            :disabled="!meta.dirty"
+                            @click="() => saveDraft(values)"
+                        />
+                        <span
+                            v-tooltip.top="
+                                !meta.valid
+                                    ? getMissingFieldsMessage(values)
+                                    : ''
+                            "
+                            class="inline-block"
+                        >
+                            <Button
+                                label="Submit Idea"
+                                icon="pi pi-check"
+                                type="submit"
+                                :loading="isSubmitting"
+                                :disabled="!meta.valid || isSubmitting"
+                            />
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -966,7 +906,6 @@ import InputSwitch from "primevue/inputswitch";
 import Button from "primevue/button";
 import Message from "primevue/message";
 import ProgressBar from "primevue/progressbar";
-import Tag from "primevue/tag";
 
 const toast = useToast();
 const ideasStore = useIdeasStore();
@@ -975,16 +914,8 @@ const ideasStore = useIdeasStore();
 const isSubmitting = ref(false);
 const showValidationSummary = ref(false);
 const submitSuccess = ref(false);
-const autoSaveStatus = ref(""); // 'saving', 'saved', or ''
 const autoSaveTimer = ref(null);
 const activeSection = ref("basics");
-
-// Sticky progress tracker state
-const isProgressSticky = ref(false);
-const progressTrackerRef = ref(null);
-const progressWrapperRef = ref(null);
-const progressTrackerTop = ref(0);
-const progressTrackerHeight = ref(0);
 
 // Section definitions
 const sections = [
@@ -1011,7 +942,7 @@ const sections = [
 ];
 
 // Progress tracking computed properties
-const totalFields = 8; // Required fields count
+const totalFields = 9; // Required fields that need user input (excluding those with defaults)
 
 // Use reactive values that will be passed from the Form component
 const currentFormValues = ref({});
@@ -1028,7 +959,9 @@ const filledFields = computed(() => {
         form.complexity,
         form.requesterName,
         form.requesterEmail,
+        form.terms === true, // Terms checkbox must be checked
     ];
+    // Note: impact, reach, and privacy have default values so are not counted
     fields.forEach((field) => {
         if (field) filled++;
     });
@@ -1037,49 +970,6 @@ const filledFields = computed(() => {
 
 const formProgress = computed(() => {
     return Math.round((filledFields.value / totalFields) * 100);
-});
-
-const sectionProgress = computed(() => {
-    const form = currentFormValues.value;
-    return [
-        {
-            id: "basics",
-            name: "Basics",
-            complete: !!(
-                form.title &&
-                form.category &&
-                form.description &&
-                form.tags?.length > 0
-            ),
-            color: "#7c3aed",
-        },
-        {
-            id: "impact",
-            name: "Impact",
-            complete: !!(
-                form.personas?.length > 0 &&
-                form.impact &&
-                form.reach
-            ),
-            color: "#7c3aed",
-        },
-        {
-            id: "technical",
-            name: "Technical",
-            complete: !!(form.complexity && form.privacy),
-            color: "#7c3aed",
-        },
-        {
-            id: "contact",
-            name: "Contact",
-            complete: !!(
-                form.requesterName &&
-                form.requesterEmail &&
-                form.terms
-            ),
-            color: "#7c3aed",
-        },
-    ];
 });
 
 // Check if section is complete
@@ -1114,61 +1004,11 @@ function isSectionComplete(sectionId, values) {
     });
 }
 
-// Scroll to section
-function scrollToSection(sectionId) {
-    const element = document.getElementById(`section-${sectionId}`);
-    if (element) {
-        const yOffset = -120; // Account for fixed header and progress tracker
-        const y =
-            element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({ top: y, behavior: "smooth" });
-        activeSection.value = sectionId;
-    }
-}
-
 // Track active section on scroll
 onMounted(() => {
-    // Get the initial position of the progress tracker after DOM is ready
-    const updateProgressPosition = () => {
-        if (progressWrapperRef.value && !isProgressSticky.value) {
-            const rect = progressWrapperRef.value.getBoundingClientRect();
-            progressTrackerTop.value = rect.top + window.scrollY;
-            progressTrackerHeight.value =
-                progressTrackerRef.value?.offsetHeight || 0;
-        }
-    };
-
-    // Initial position calculation
-    setTimeout(updateProgressPosition, 100);
-
     const handleScroll = () => {
-        // Update position if not sticky
-        if (!isProgressSticky.value) {
-            updateProgressPosition();
-        }
-
-        // Handle sticky progress tracker
-        if (progressWrapperRef.value) {
-            const scrollY = window.scrollY;
-
-            // Make sticky when scrolled past its natural position
-            if (scrollY > progressTrackerTop.value) {
-                isProgressSticky.value = true;
-                // Set wrapper height to prevent layout jump
-                if (progressWrapperRef.value) {
-                    progressWrapperRef.value.style.height = `${progressTrackerHeight.value}px`;
-                }
-            } else {
-                isProgressSticky.value = false;
-                // Reset wrapper height
-                if (progressWrapperRef.value) {
-                    progressWrapperRef.value.style.height = "auto";
-                }
-            }
-        }
-
         // Handle active section detection
-        const scrollPosition = window.scrollY + 150;
+        const scrollPosition = window.scrollY + 100;
 
         for (const section of sections) {
             const element = document.getElementById(`section-${section.id}`);
@@ -1440,9 +1280,7 @@ function saveDraft(values, showToast = true) {
             severity: "success",
             summary: "Draft Saved",
             detail: "Your draft has been saved locally and will be restored when you return.",
-            life: 4000,
-            styleClass: "bread",
-            contentStyleClass: "bread",
+            life: 3000,
         });
     }
 }
@@ -1457,16 +1295,17 @@ function autoSaveDraft(values) {
         return;
     }
 
-    autoSaveStatus.value = "saving";
-
     autoSaveTimer.value = setTimeout(() => {
         saveDraft(values, false);
-        autoSaveStatus.value = "saved";
 
-        setTimeout(() => {
-            autoSaveStatus.value = "";
-        }, 3000);
-    }, 2000);
+        // Show toast notification for auto-save
+        toast.add({
+            severity: "success",
+            summary: "Draft Saved",
+            detail: "Your progress has been automatically saved",
+            life: 2000,
+        });
+    }, 10000);
 }
 
 // Watch form values for changes
@@ -1566,7 +1405,6 @@ function clearForm() {
         localStorage.removeItem("draft_submit_idea");
         showValidationSummary.value = false;
         submitSuccess.value = false;
-        autoSaveStatus.value = "";
 
         toast.add({
             severity: "info",
@@ -1579,41 +1417,42 @@ function clearForm() {
 </script>
 
 <style scoped>
-/* Progress Wrapper - maintains layout when progress bar becomes fixed */
-.progress-wrapper {
+/* Footer Layout */
+.footer-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Progress Bar with Text Overlay */
+.progress-bar-wrapper {
     position: relative;
-    margin-bottom: 2rem;
+    flex: 1;
+    min-width: 250px;
+    max-width: 400px;
 }
 
-/* Progress Container Styles */
-.progress-container {
-    position: relative;
-    background: var(--surface-card);
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid var(--surface-border);
-    transition:
-        box-shadow 0.2s,
-        border-radius 0.2s;
+.custom-progress-bar {
+    height: 32px;
 }
 
-.progress-container.is-sticky {
-    position: fixed;
-    top: 0; /* Stick to the very top of viewport */
-    left: 0;
-    right: 0;
-    z-index: 1001; /* Above nav header (which is at 1000) */
-    margin-bottom: 0;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-    border-top: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.custom-progress-bar :deep(.p-progressbar-value) {
+    background: var(--primary-color);
 }
 
-.progress-info {
-    max-width: 1200px;
-    margin: 0 auto;
+.progress-text-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--text-color);
+    font-size: 0.875rem;
+    white-space: nowrap;
+    pointer-events: none;
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+    font-weight: 500;
 }
 
 /* Responsive text utilities */
@@ -1635,6 +1474,11 @@ function clearForm() {
 
 .font-semibold {
     font-weight: 600;
+}
+
+.mx-2 {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
 }
 
 .white-space-nowrap {
@@ -1660,40 +1504,14 @@ function clearForm() {
     }
 }
 
-/* Bread, not toast */
-.bread {
-    color: #efefef;
-}
-
-/* Tag cursor style */
-.p-tag.cursor-pointer:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
-}
-
-/* Section tag styles */
-.section-tag {
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.section-tag:not(.p-tag-success) {
-    background: transparent;
-    border-width: 2px;
-}
-
-.section-tag.p-tag-success {
-    font-weight: 600;
-}
-
 /* Form Content Adjustments */
 .form-content {
-    padding-bottom: 100px; /* Space for sticky footer */
+    padding-bottom: 70px; /* Space for sticky footer */
+    padding-top: 0; /* Remove any top padding */
 }
 
 .section-panel {
-    scroll-margin-top: 100px; /* Account for sticky progress tracker */
+    scroll-margin-top: 60px; /* Account for header */
 }
 
 .section-status {
@@ -1716,46 +1534,21 @@ function clearForm() {
 .sticky-footer-content {
     max-width: 1200px;
     margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
 }
 
 .footer-spacer {
-    height: 80px; /* Match footer height */
-}
-
-.progress-summary {
-    padding: 0.5rem 1rem;
-    background: var(--surface-100);
-    border-radius: 20px;
+    height: 0px;
 }
 
 /* Dark theme adjustments */
-.dark-theme .progress-tracker-container {
-    background: var(--surface-ground);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.dark-theme .progress-track {
-    background: var(--surface-600);
-}
-
-.dark-theme .step-indicator {
-    background: var(--surface-700);
-    border-color: var(--surface-600);
-}
-
 .dark-theme .sticky-footer {
     background: var(--surface-card);
     border-top-color: var(--surface-600);
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
 }
 
-.dark-theme .progress-summary {
-    background: var(--surface-700);
+.dark-theme .progress-text-overlay {
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
 }
 
 /* Existing styles from original */
@@ -1922,23 +1715,34 @@ function clearForm() {
         font-size: 0.75rem;
     }
 
-    .sticky-footer-content {
+    .footer-top-row {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .sticky-footer-content > div:first-child {
-        text-align: center;
+    .progress-bar-wrapper {
+        max-width: 100%;
+        width: 100%;
+        margin-bottom: 1rem;
     }
 
-    .sticky-footer-content > div:last-child {
-        display: flex;
+    .footer-top-row > div:last-child {
         flex-direction: column;
         gap: 0.5rem;
+        width: 100%;
     }
 
-    .progress-summary {
-        display: inline-block;
+    .footer-top-row > div:last-child > button,
+    .footer-top-row > div:last-child > span {
+        width: 100%;
+    }
+
+    .footer-top-row > div:last-child > span > button {
+        width: 100%;
+    }
+
+    .footer-spacer {
+        height: 140px;
     }
 }
 
