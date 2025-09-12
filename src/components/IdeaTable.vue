@@ -335,7 +335,7 @@
                                     >No tags</span
                                 >
                             </div>
-                            <div class="flex justify-content-end gap-1 mt-3">
+                            <div class="flex justify-content-end gap-1">
                                 <Button
                                     icon="pi pi-pencil"
                                     severity="secondary"
