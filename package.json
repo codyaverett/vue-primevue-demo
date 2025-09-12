@@ -13,7 +13,7 @@
         "preinstall": "npx only-allow pnpm",
         "publish": "NODE_ENV=production pnpm run build && gh-pages -d dist --dotfiles",
         "review": "pnpx electron electron/main.cjs",
-        "review:dev": "concurrently \"pnpm run dev\" \"wait-on http://localhost:5175 && pnpx electron electron/main.cjs\""
+        "review:dev": "concurrently \"pnpm run dev\" \"wait-on http://localhost:5173 && pnpx electron electron/main.cjs\""
     },
     "dependencies": {
         "@vee-validate/rules": "4.15.1",

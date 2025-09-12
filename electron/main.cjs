@@ -6,7 +6,7 @@ const execAsync = promisify(exec);
 
 let mainWindow;
 let devServerProcess;
-let currentPort = 5173;
+let currentPort = process.env.VITE_PORT || 5173;
 
 async function getGitBranches() {
     try {
@@ -135,7 +135,7 @@ async function checkoutCommit(hash) {
 async function startDevServer() {
     // For now, assume dev server is already running
     // This simplifies the setup and avoids conflicts
-    console.log('Note: Please ensure dev server is running (pnpm run dev)');
+    console.log(`Note: Please ensure dev server is running on port ${currentPort} (pnpm run dev)`);
     return Promise.resolve();
 }
 
@@ -155,6 +155,11 @@ function createWindow() {
     Menu.setApplicationMenu(null);
     
     mainWindow.loadFile(path.join(__dirname, 'toolbar.html'));
+    
+    // Pass the port to the renderer process
+    mainWindow.webContents.on('did-finish-load', () => {
+        mainWindow.webContents.send('set-dev-port', currentPort);
+    });
     
     mainWindow.on('closed', () => {
         mainWindow = null;
@@ -179,6 +184,10 @@ app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
     }
+});
+
+ipcMain.handle('get-dev-port', () => {
+    return currentPort;
 });
 
 ipcMain.handle('get-branches', async () => {

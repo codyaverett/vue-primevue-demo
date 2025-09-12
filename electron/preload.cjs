@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+    getDevPort: () => ipcRenderer.invoke('get-dev-port'),
     getBranches: () => ipcRenderer.invoke('get-branches'),
     getCurrentBranch: () => ipcRenderer.invoke('get-current-branch'),
     checkoutBranch: (branchName) => ipcRenderer.invoke('checkout-branch', branchName),
@@ -15,5 +16,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
     onRefreshWebview: (callback) => {
         ipcRenderer.on('refresh-webview', () => callback());
+    },
+    onSetDevPort: (callback) => {
+        ipcRenderer.on('set-dev-port', (event, port) => callback(port));
     }
 });

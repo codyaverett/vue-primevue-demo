@@ -6,6 +6,7 @@ let currentCommitHash = '';
 let webview;
 let navigationHistory = [];
 let currentHistoryIndex = -1;
+let devServerPort = 5173;
 
 document.addEventListener('DOMContentLoaded', async () => {
     webview = document.getElementById('webview');
@@ -429,9 +430,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     
     // Initialize
+    // Get the dev server port from main process
+    try {
+        devServerPort = await window.electronAPI.getDevPort();
+    } catch (error) {
+        console.log('Using default port 5173');
+    }
+    
     await loadBranches();
     await loadCommits();
     
-    addToHistory('http://localhost:5175');
+    // Set initial URL with correct port
+    const initialUrl = `http://localhost:${devServerPort}`;
+    urlInput.value = initialUrl;
+    webview.src = initialUrl;
+    addToHistory(initialUrl);
     updateNavigationButtons();
 });
