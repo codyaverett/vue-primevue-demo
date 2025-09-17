@@ -28,7 +28,7 @@ The project is a Vue 3 application using the Composition API with PrimeVue 3 for
 
 ## Todo List
 
-### Phase 1: Form Enhancement (REQUIRED) ✅ Priority
+### Phase 1: Form Enhancement (REQUIRED)
 
 - [x] Implement comprehensive validation system
 - [x] Add auto-save draft functionality
@@ -51,7 +51,7 @@ The project is a Vue 3 application using the Composition API with PrimeVue 3 for
 - [x] Create idea trends chart
 - [x] Add quick action buttons
 
-### Phase 4: Theme & Polish ✅
+### Phase 4: Theme & Polish
 
 - [x] Implement dark/light theme toggle
 - [x] Create style guide page
